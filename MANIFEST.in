@@ -1,0 +1,2 @@
+recursive-include apiview/templates *.html
+recursive-include apiview/static/apiview/js/ *
