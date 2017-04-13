@@ -62,7 +62,7 @@ class View(six.with_metaclass(ViewMetaclass, APIView)):
             if ws_user is not None:
                 request.user = ws_user
             handler_name = request.method.lower()
-            if is_ws:
+            if self.is_ws:
                 handler_name = "ws"
             if handler_name in self.http_method_names:
                 opts = self._meta
@@ -77,7 +77,7 @@ class View(six.with_metaclass(ViewMetaclass, APIView)):
                 else:
                     handler = self.http_method_not_allowed
 
-                request.params = Param(self, request, is_ws, ws_data)
+                request.params = Param(self, request, self.is_ws, self.ws_data)
                 request._request.params = request.params
                 response = handler(request, *args, **kwargs)
             else:

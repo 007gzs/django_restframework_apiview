@@ -24,7 +24,6 @@ import urlparse
 import uuid
 import posixpath
 
-from constance import config
 from django.conf import settings
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.core.files.storage import default_storage
@@ -114,15 +113,15 @@ def safe_loadjson(jstr):
 
     return(retobj)
 
-def prase_url(request, value):
-    if not value or value.strip() == '':
-        return ''
-    if '://' in value:
-        return value
-    if request:
-        return request.build_absolute_uri(value)
-    else:
-        return config.SL_HTTP_HOST + value
+# def prase_url(request, value):
+#     if not value or value.strip() == '':
+#         return ''
+#     if '://' in value:
+#         return value
+#     if request:
+#         return request.build_absolute_uri(value)
+#     else:
+#         return config.SL_HTTP_HOST + value
 
 def appendMediaURL(value):
     if hasattr(value, 'url'):
@@ -133,12 +132,12 @@ def appendMediaURL(value):
     else:
         return(os.path.join(settings.MEDIA_URL, value))
 
-def real_url(request, pic_field):
-    if not pic_field:
-        return ''
-    if hasattr(pic_field, 'name'):
-        pic_field = pic_field.name
-    return prase_url(request, appendMediaURL(pic_field))
+# def real_url(request, pic_field):
+#     if not pic_field:
+#         return ''
+#     if hasattr(pic_field, 'name'):
+#         pic_field = pic_field.name
+#     return prase_url(request, appendMediaURL(pic_field))
 
 def hash_sha1(str):
     if not str or str.strip() == '':
@@ -520,13 +519,13 @@ def request_ip(request):
 
 
 # 邮件签名, 包括IP地址,时间, 是否生产环境等
-def mail_remark():
+# def mail_remark():
 
-    remark = u'<br>IP:%s <br>时间:(%s)' % (settings.SERVER_IP, datetime.datetime.now())
-    remark += u'<br>调试模式：{b}'.format(b=u'是' if settings.DEBUG else u'否')
-    remark += u'<br>生产环境：{b}'.format(b=u'是' if config.IS_PRODUCTION else u'否')
+#     remark = u'<br>IP:%s <br>时间:(%s)' % (settings.SERVER_IP, datetime.datetime.now())
+#     remark += u'<br>调试模式：{b}'.format(b=u'是' if settings.DEBUG else u'否')
+#     remark += u'<br>生产环境：{b}'.format(b=u'是' if config.IS_PRODUCTION else u'否')
 
-    return remark
+#     return remark
 
 def decode_base64_image(base_str):
     image = None

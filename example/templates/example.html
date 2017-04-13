@@ -1,0 +1,159 @@
+<html>
+<head>
+<script src="https://cdn.bootcss.com/jquery/3.2.1/jquery.min.js"></script>
+{% load apiview_tags %}
+{% apiview %}
+<script type="text/javascript">
+
+    function example_log(text){
+        document.getElementById("example_log").innerHTML += text + "<br><br>";
+    }
+    var example = {
+        format:'json',
+        version:'1.0.1',
+        ws_listener:function(data){
+            example_log("get data from server : " + JSON.stringify(data));
+        },
+        init_ws:function(initok){
+            this.apiview = new ApiViewWS("/apiview", this.ws_listener, initok);
+        },
+        conn: function (p_url, p_data, listener, format, p_type) {
+            if(format==undefined || format==null){
+                format = this.format;
+            }
+            if(p_type == undefined || p_type==null){
+                p_type = 'GET';
+            }
+            p_data["format"] = format;
+            p_data["channel"] = this.channel;
+            $.ajax({
+                type: p_type,
+                url: p_url,
+                data: p_data,
+                dataType: this.format,
+                context: $('body'),
+                xhrFields: {
+                    withCredentials: true
+                },
+                success: function (data) {
+                    if (!!listener && typeof listener.success === "function") {
+                        listener.success(data);
+                    }
+                },
+                error: function (xhr, type) {
+                    if (!!listener && typeof listener.error === "function") {
+                        listener.error(xhr, type);
+                    }
+                }
+            })
+
+        },
+        conn_ws:function(url, data, listener){
+            this.apiview.conn(url, data, listener);
+        },
+        server:'http://api.007.pub:60080', //服务地址
+        SUCCESS:0, //返回成功
+        ERR_UNKOWN:-1, //未知错误
+        ERR_SYS_ERROR:-2, //服务异常
+        ERR_COMMON_BAD_PARAM:-11, //参数错误
+        ERR_COMMON_BAD_FORMAT:-12, //格式错误
+        ERR_COMMON_PERMISSION:-13, //权限错误
+        ERR_AUTH_NOLOGIN:10001, //请先登陆
+        ERR_AUTH_USER_EXISTS:10002, //用户名已存在
+        ERR_AUTH_USER_NOT_EXISTS:10003, //找不到用户
+        ERR_AUTH_PASSWORD:10005, //密码错误
+
+        // 用户登陆
+        example_user_login: function(listener, username, password){
+            var url = '/example/user/login';
+            var data = {username:username,password:password};
+            this.conn(url, data, listener);
+        },
+        // 用户注册
+        example_user_register: function(listener, username, password, nickname){
+            var url = '/example/user/register';
+            var data = {username:username,password:password,nickname:nickname};
+            this.conn(url, data, listener);
+        },
+        // 用户信息
+        example_user_info: function(listener){
+            var url = '/example/user/info';
+            var data = {};
+            this.conn(url, data, listener);
+        },
+
+        // 用户信息 ws
+        example_user_info_ws: function(listener){
+            var url = '/example/user/info';
+            var data = {};
+            this.conn_ws(url, data, listener);
+        },
+    };
+    function reg(username, password, nickname, callback){
+        example.example_user_register({
+            success:function(data){
+                example_log("example_user_register success:" + JSON.stringify(data));
+                if(data.code == example.SUCCESS){
+                    callback()
+                }
+            },
+            error:function(xhr, type){
+                example_log("example_user_register error:" + xhr +"," + type);
+            }
+        }, username, password, nickname)
+    }
+    function login(username, password, callback){
+        example.example_user_login({
+            success:function(data){
+                example_log("example_user_login success:" + JSON.stringify(data));
+                if(data.code == example.SUCCESS){
+                    callback()
+                }
+            },
+            error:function(xhr, type){
+                example_log("example_user_login error:" + xhr +"," + type);
+            }
+        }, username, password)
+    }
+    function check_info(callback){
+        example.example_user_info({
+            success:function(data){
+                example_log("example_user_info success:" + JSON.stringify(data));
+                if(data.code == example.ERR_AUTH_NOLOGIN){
+                    var rand = parseInt(Math.random() * 10000);
+                    var username = "username_" + rand; 
+                    var password = "password_" + rand;
+                    var nickname = "nickname_" + rand;
+                    reg(username, password, nickname, function(){
+                        login(username, password, callback);
+                    });
+                }else if(data.code == example.SUCCESS){
+                    callback()
+                }
+            },
+            error:function(xhr, type){
+                example_log("example_user_info error:" + xhr + "," + type);
+            }
+        })
+    }
+    $(function(){
+        check_info(function(){
+            example.init_ws(function(){
+                example.example_user_info_ws({
+                    success:function(data){
+                        example_log("example_user_info_ws success:" + JSON.stringify(data));
+                    },
+                    error:function(xhr, type){
+                        example_log("example_user_info_ws error:" + xhr +"," + type);
+                    }
+                });
+            });
+            
+        });
+    });
+</script>
+</head>
+<body>
+    <div id="example_log"></div>
+</body>
+</html>

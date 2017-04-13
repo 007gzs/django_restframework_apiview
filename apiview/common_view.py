@@ -20,7 +20,7 @@ def generate_api_js(request):
     # api.js?package_name=bbapi.views&ext_params=referral_code,version,device_id,channel
     tags = ErrCode.get_tags()
     content = ''
-    content += "api_server:'%s', //服务地址\n" % request.build_absolute_uri("/")[:-1]
+    content += "server:'%s', //服务地址\n" % request.build_absolute_uri("/")[:-1]
     for tag in tags:
         code_data = getattr(ErrCode, tag)
         content += '%s:%d, //%s\n' % (tag, code_data.code, code_data.message)
@@ -41,11 +41,11 @@ def generate_api_js(request):
         content += '''
 // %s
 %s: function(listener%s){
-    var url = this.api_server + '%s';
+    var url = '%s';
     var data = {%s};
     this.conn(url, data, listener);
 },''' % (view['name'], func_name, str_args, view['url'], str_data)
-    return Response(content, content_type='text/plain')
+    return Response(content.encode("utf8"), content_type='text/plain;charset=utf-8')
 
 
 def get_url(head, urlpattern):

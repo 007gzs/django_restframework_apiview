@@ -23,7 +23,7 @@ setup(
     # Versions should comply with PEP440.  For a discussion on single-sourcing
     # the version across setup.py and the project code, see
     # https://packaging.python.org/en/latest/single_source_version.html
-    version='1.0.0',
+    version='1.0.1',
 
     description='Django REST_framework APIView',
     long_description=long_description,
@@ -57,7 +57,7 @@ setup(
         # that you indicate whether you support Python 2, Python 3 or both.
         'Programming Language :: Python :: 2',
         'Programming Language :: Python :: 2.7',
-        # 'Programming Language :: Python :: 3', # not test in python 3
+        # 'Programming Language :: Python :: 3', # has not test in python 3
         # 'Programming Language :: Python :: 3.3',
         # 'Programming Language :: Python :: 3.4',
         # 'Programming Language :: Python :: 3.5',
@@ -69,7 +69,7 @@ setup(
     # You can just specify the packages manually here if your project is
     # simple. Or you can use find_packages().
     #packages=find_packages(exclude=['contrib', 'docs', 'tests']),
-    packages=['apiview', 'apiview.views', 'apiview.views.dtd'],
+    packages=['apiview', 'apiview.templatetags', 'apiview.views', 'apiview.views.dtd'],
 
     # Alternatively, if you want to distribute just a my_module.py, uncomment
     # this:
