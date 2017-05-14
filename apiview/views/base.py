@@ -69,7 +69,10 @@ class ViewOptions(object):
         if not self.name:
             self.name = self.view.__name__
         if self.path is None:
-            self.path = urljoin(self.parent._meta.path, _camel2path(self.name))
+            parentpath = self.parent._meta.path
+            if not parentpath.endswith("/"):
+                parentpath += "/"
+            self.path = urljoin(parentpath, _camel2path(self.name))
         if self.parent:
             self.parent._meta.children.append(cls)
 
