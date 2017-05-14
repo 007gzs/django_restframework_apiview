@@ -5,8 +5,10 @@ Declare the metaclass of the views to manage view generation
 from  __future__ import absolute_import, unicode_literals
 
 from collections import OrderedDict
-from urlparse import urljoin
-
+try:
+    from urlparse import urljoin
+except:
+    from urllib.parse import urljoin
 from django import http
 from django import forms
 from django.core.urlresolvers import RegexURLPattern
@@ -14,6 +16,7 @@ from django.conf import settings
 from django.views.generic import View as DjangoView
 from django.utils import six
 from django.utils.functional import cached_property
+from django.utils.encoding import force_text
 
 from .utils import split_camel_name
 from .param import Param
@@ -79,7 +82,7 @@ class ViewOptions(object):
         form_attrs = dict(self.param_fields)
         form_attrs['__module__'] = cls.__module__
         cls.param_form = type(self.form)(
-            cls.__name__ + b'Form',
+            cls.__name__ + 'Form',
             (self.form, ),
             form_attrs)
 
@@ -107,7 +110,7 @@ class ViewOptions(object):
         rows = []
         if with_header:
           rows.append(fields)
-        for name, field in self.param_fields.iteritems():
+        for name, field in self.param_fields.items():
             if field.required:
                 field_name = '*%s*' % name
             else:
@@ -117,7 +120,7 @@ class ViewOptions(object):
                 f_lens[0] = len(field_name)
             idx = 1
             for att in f_attrs:
-                f_val = unicode(getattr(field, att))
+                f_val = force_text(getattr(field, att))
                 if f_lens[idx] < len(f_val):
                     f_lens[idx] = len(f_val)
                 row.append(f_val)
@@ -189,7 +192,7 @@ class View(six.with_metaclass(ViewMetaclass, DjangoView)):
                 response = handler(request, *args, **kwargs)
 
             return response
-        except forms.ValidationError, exc:
+        except forms.ValidationError as exc:
             response = self.handle_param_errors(exc)
 
     def handle_param_errors(self, exc):

@@ -39,7 +39,7 @@ class ViewSite(object):
                 view_class.__name__, (view_class, ), attrs)
 
         path = view_class._meta.path.strip('/')
-        if self._registry.has_key(path):
+        if path in self._registry:
             raise AlreadyRegistered("path '%s' has been already registered" % (
                 path))
         self._registry[path] = view_class

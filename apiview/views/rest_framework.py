@@ -83,7 +83,7 @@ class View(six.with_metaclass(ViewMetaclass, APIView)):
             else:
                 handler = self.http_method_not_allowed
                 response = handler(request, *args, **kwargs)
-        except forms.ValidationError, exc:
+        except forms.ValidationError as exc:
             response = self.handle_param_errors(exc)
         except Exception as exc:
             response = self.handle_exception(exc)

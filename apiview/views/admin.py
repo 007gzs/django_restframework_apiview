@@ -53,7 +53,7 @@ class TestCaseAdmin(ModelAdmin):
                 error_list.append('%s: %s' % (
                     ' - '.join(map(unicode, err.path)),
                     err.message))
-        except Exception, exc:
+        except Exception as exc:
             error_list.append(unicode(exc))
         return mark_safe('<br/>'.join(error_list))
 

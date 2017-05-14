@@ -3,14 +3,14 @@ try:
     from django.forms.util import ErrorDict
 except ImportError:
     from django.forms.utils import ErrorDict
-from django.utils.encoding import force_unicode
+from django.utils.encoding import force_text
 
 class TextErrorDict(ErrorDict):
     def __str__(self):
         return self.as_text()
 
     def __unicode__(self):
-        return force_unicode(self.as_text())
+        return force_text(self.as_text())
 
 class Param(object):
     """
@@ -61,7 +61,7 @@ class Param(object):
 
         errors = ErrorDict()
         for name in names:
-            if self._dependency.has_key(name):
+            if name in self._dependency:
                 try:
                     field, pairs = self._dependency[name]
                     try:
@@ -70,7 +70,7 @@ class Param(object):
                         continue
                     for sub_name, sub_field in pairs:
                         _ = sub_field.clean(self._cleaned_data[sub_name])
-                except forms.ValidationError, exc:
+                except forms.ValidationError as exc:
                     error_dict = TextErrorDict([(sub_name, exc.messages)])
                     errors[name] = [error_dict]
                     del self._cleaned_data[name]

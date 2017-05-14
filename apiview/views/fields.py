@@ -135,7 +135,7 @@ def wrap_field(methods=()):
     return partial(_wrap_field, methods=methods)
 
 for _fieldclass_name in fields.__all__[1:]:
-    exec '{0} = _wrap_field(fields.{0})'.format(_fieldclass_name)
+    six.exec_('{0} = _wrap_field(fields.{0})'.format(_fieldclass_name))
 
 del _fieldclass_name
 

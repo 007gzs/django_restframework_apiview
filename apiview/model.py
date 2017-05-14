@@ -17,7 +17,7 @@ class ModelChangeMixin(object):
     '''Monitor the changed attributes'''
 
     def __setattr__(self, name, value):
-        if not name.startswith('_') and self.__dict__.has_key(name):
+        if not name.startswith('_') and name in self.__dict__:
             self._to_change(name, value)
         object.__setattr__(self, name, value)
 
@@ -46,7 +46,7 @@ class ModelFieldChangeMixin(ModelChangeMixin):
     '''
 
     def __setattr__(self, name, value):
-        if not name.startswith('_') and self.__dict__.has_key(name):
+        if not name.startswith('_') and name in self.__dict__:
             if not hasattr(self._meta, '_attname_map'):
                 _attname_map = {}
                 _name_map = {}
@@ -75,7 +75,7 @@ class ModelFieldChangeMixin(ModelChangeMixin):
                     # because the rel field would not be kept in
                     # `changed_map` when its data did not load
                     # from DB after set it to a new Model object.
-                    if (self.__dict__.has_key(name)
+                    if (name in self.__dict__
                         or getattr(self, field.attname) is None):
                         self._to_change(name, value)
                 else:
@@ -97,8 +97,8 @@ class ModelFieldChangeMixin(ModelChangeMixin):
 class BaseModel(models.Model, ModelFieldChangeMixin):
     created = CreationDateTimeField('创建时间', db_index=True, editable=False)
     modified = ModificationDateTimeField('修改时间', db_index=True, editable=False)
-    is_delete = models.BooleanField(u"删除", default=False, null=False, db_index=True)
-    remark = models.CharField(u'备注', max_length=500, null=True, blank=True)
+    is_delete = models.BooleanField('删除', default=False, null=False, db_index=True)
+    remark = models.CharField('备注', max_length=500, null=True, blank=True)
 
     class Meta:
         abstract = True
@@ -134,7 +134,7 @@ class BaseModel(models.Model, ModelFieldChangeMixin):
             self.created = datetime.datetime.now()
         try:
             super(BaseModel, self).save(force_insert=force_insert, force_update=force_update, using=using, update_fields=update_fields)
-        except DatabaseError, exp:
+        except DatabaseError as exp:
             if str(exp).endswith('did not affect any rows.'):
                 pass
             else:

@@ -135,7 +135,7 @@ class BaseSerializer(serializers.ModelSerializer):
         # We override this method in order to automagically create
         # `ListSerializer` classes instead when `many=True` is set.
         request = kwargs.pop("request", None)
-        if not kwargs.has_key("context") and request is not None:
+        if "context" not in kwargs and request is not None:
             kwargs["context"] = {"request": request}
         return super(BaseSerializer, cls).__new__(cls, *args, **kwargs)
 

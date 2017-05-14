@@ -3,7 +3,6 @@
 
 from __future__ import unicode_literals, division
 
-import HTMLParser
 import base64
 # from datetime import timedelta, datetime
 import datetime
@@ -17,10 +16,8 @@ import math
 import os
 import random
 import re
-from string import join
 import string
 import urllib
-import urlparse
 import uuid
 import posixpath
 
@@ -75,7 +72,7 @@ def get_uuid_filename(path_format):
 def IsMobileNumber(mobile):
     return(validators.mobile.is_valid(mobile))
 
-g_weekdaystr = (u'周一', u'周二', u'周三', u'周四', u'周五', u'周六', u'周日')
+g_weekdaystr = ('周一', '周二', '周三', '周四', '周五', '周六', '周日')
 def get_weekday_str(date):
     return g_weekdaystr[date.weekday()]
 
@@ -98,7 +95,7 @@ def priceFormat(price, decimal_places=2):
 #定义枚举
 class Enum(object):
     def __init__(self, **kwargs):
-        for attr, val in kwargs.iteritems():
+        for attr, val in kwargs.items():
             setattr(self, attr, val)
 
 def enum(**enums):
@@ -108,7 +105,7 @@ def safe_loadjson(jstr):
     retobj = None
     try:
         retobj = json.loads(jstr)
-    except Exception, e:
+    except Exception as e:
         reportExceptionByMail("json load error")
 
     return(retobj)
@@ -161,18 +158,18 @@ def getServerIP():
     return(ip)
 
 
-LST_COLOR_CHARS = (u'白', u'黑', u'红', u'绿', u'蓝', u'黄', u'银', u'灰', u'粉', u'紫', u'橙', u'棕', u'香槟', u'咖啡', u'金')
+LST_COLOR_CHARS = ('白', '黑', '红', '绿', '蓝', '黄', '银', '灰', '粉', '紫', '橙', '棕', '香槟', '咖啡', '金')
 def colorValidate(color):
     if not color or len(color) == 0:
-        return u'请输入颜色'
+        return '请输入颜色'
 
     if len(color) > 10:
-        return u'颜色输入过长'
+        return '颜色输入过长'
 
     if 0 not in [string.find(color, c)==-1 for c in LST_COLOR_CHARS]:
-        return u'请用中文正确输入颜色'
+        return '请用中文正确输入颜色'
 
-    return u''
+    return ''
 
 def sendEmail(subject, add_to, html_content):
     from django.conf import settings
@@ -248,6 +245,10 @@ def rsa_decrypt(srcStr, prikey):
     return(result)
 
 def querystring2dict(querystring):
+    try:
+        import urlparse
+    except:
+        from urllib.parse import urlparse
     resultDict = dict((k,v if len(v)>1 else v[0]) for k,v in urlparse.parse_qs(querystring).iteritems())
     return(resultDict)
 
@@ -299,12 +300,16 @@ def filter_emoji(desstr,restr=''):
     过滤表情
     '''
     try:
-        co = re.compile(u'[\U00010000-\U0010ffff]')
+        co = re.compile('[\U00010000-\U0010ffff]')
     except re.error:
-        co = re.compile(u'[\uD800-\uDBFF][\uDC00-\uDFFF]')
+        co = re.compile('[\uD800-\uDBFF][\uDC00-\uDFFF]')
     return co.sub(restr, desstr)
 
 def str_2_emoji(emoji_str):
+    try:
+        import HTMLParser
+    except:
+        from html.parse import HTMLParser
     '''
     把字符串转换为表情
     '''
@@ -313,7 +318,7 @@ def str_2_emoji(emoji_str):
     h = HTMLParser.HTMLParser()
     emoji_str = h.unescape(h.unescape(emoji_str))
     #匹配u"\U0001f61c"和u"\u274c"这种表情的字符串
-    co = re.compile(ur"u[\'\"]\\[Uu]([\w\"]{9}|[\w\"]{5})")
+    co = re.compile(r"u[\'\"]\\[Uu]([\w\"]{9}|[\w\"]{5})")
     pos_list=[]
     result=emoji_str
     #先找位置
@@ -511,7 +516,7 @@ def check_time(time_to_check, on_time, off_time):
 
 
 def request_ip(request):
-    if request.META.has_key('HTTP_X_FORWARDED_FOR'):
+    if 'HTTP_X_FORWARDED_FOR' in request.META:
         ip = request.META['HTTP_X_FORWARDED_FOR']
     else:
         ip = request.META['REMOTE_ADDR']
@@ -521,9 +526,9 @@ def request_ip(request):
 # 邮件签名, 包括IP地址,时间, 是否生产环境等
 # def mail_remark():
 
-#     remark = u'<br>IP:%s <br>时间:(%s)' % (settings.SERVER_IP, datetime.datetime.now())
-#     remark += u'<br>调试模式：{b}'.format(b=u'是' if settings.DEBUG else u'否')
-#     remark += u'<br>生产环境：{b}'.format(b=u'是' if config.IS_PRODUCTION else u'否')
+#     remark = '<br>IP:%s <br>时间:(%s)' % (settings.SERVER_IP, datetime.datetime.now())
+#     remark += '<br>调试模式：{b}'.format(b='是' if settings.DEBUG else '否')
+#     remark += '<br>生产环境：{b}'.format(b='是' if config.IS_PRODUCTION else '否')
 
 #     return remark
 

@@ -9,7 +9,7 @@ class TestJSONSchema(unittest.TestCase):
         self.assertEqual(json2schema([])['type'], 'array')
         self.assertEqual(json2schema({})['type'], 'object')
         self.assertEqual(json2schema({'a': 1.1})['properties']['a']['type'], 'number')
-        self.assertEqual(json2schema({'a': 1L})['properties']['a']['type'], 'integer')
+        self.assertEqual(json2schema({'a': 1})['properties']['a']['type'], 'integer')
         self.assertEqual(json2schema({'a': ''})['properties']['a']['type'], 'string')
         self.assertEqual(json2schema({'a': []})['properties']['a']['type'], 'array')
         self.assertEqual(json2schema({'a': {}})['properties']['a']['type'], 'object')

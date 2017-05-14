@@ -43,11 +43,11 @@ class ComplexityValidator(ValidateMixin, BaseValidator):
     )
     code = 'complexity'
     message = {
-        'blanks': u'不能含有空白字符',
-        'min_length': u'不能少于%(min_length)d位字符',
-        'max_length': u'不能多于%(max_length)d位字符',
-        'min_types': u'需要包含大写字母、小写字母、数字、特殊字符中的%(min_types)d种以上类型',
-        'default': u'复杂度不能满足要求',
+        'blanks': '不能含有空白字符',
+        'min_length': '不能少于%(min_length)d位字符',
+        'max_length': '不能多于%(max_length)d位字符',
+        'min_types': '需要包含大写字母、小写字母、数字、特殊字符中的%(min_types)d种以上类型',
+        'default': '复杂度不能满足要求',
     }
 
     def __init__(self, **kwargs):
@@ -59,7 +59,7 @@ class ComplexityValidator(ValidateMixin, BaseValidator):
         for char_type in self.char_types:
             checking_map[char_type] = 0
 
-        for k, v in kwargs.iteritems():
+        for k, v in kwargs.items():
             if k not in self.char_types:
                 raise TypeError('ComplexityValidator does not support charactor type: %s' % k)
             checking_map[k] = v
