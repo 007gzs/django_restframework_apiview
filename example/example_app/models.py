@@ -19,7 +19,7 @@ class User(AbstractUserMixin, BaseModel, AbstractBaseUser):
 
     USERNAME_FIELD = 'username'
     username = models.CharField('用户名', unique=True, max_length=64, editable=False, null=False, blank=False)
-    password = models.CharField('密码', max_length=32, unique=True, editable=False, null=False, blank=True)
+    password = models.CharField('密码', max_length=128, unique=True, editable=False, null=False, blank=True)
     nickname = models.CharField('昵称', unique=True, max_length=64, editable=False, null=False, blank=False)
 
     class Meta:

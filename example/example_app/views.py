@@ -85,7 +85,7 @@ class UserRegister(APIBase):
 
     class Meta:
         param_fields = (
-            ('username', fields.CharField(help_text='用户名')),
+            ('username', fields.RegexField(help_text='用户名', regex=r'^[a-zA-Z0-9_]{3,10}$')),
             ('password', fields.CharField(help_text='密码')),
             ('nickname', fields.CharField(help_text='昵称')),
         )
