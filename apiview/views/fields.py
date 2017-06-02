@@ -21,6 +21,7 @@ from django.forms.models import fields_for_model
 from django.core.exceptions import ValidationError
 from django.utils import six
 from django.utils.translation import ugettext_lazy as _
+from django.utils.encoding import force_text
 from apiview import utility
 # to prevent Importation-Examination
 from django.forms.fields import *
@@ -58,20 +59,18 @@ def field_for_model(
             help_text and {field: help_text},
             error_messages and {field: error_messages})[field]
 
-def smart_help_text(field):
-    if field.help_text:
-        return field.help_text
+def field_info(field):
 
     if isinstance(field, (fields.BooleanField, fields.NullBooleanField)):
         return '0, false; 1, true'
 
     if hasattr(field, 'choices'):
-        return '; '.join([': '.join(map(unicode, choice)) for choice in field.choices])
+        return '; '.join([': '.join(map(force_text, choice)) for choice in field.choices])
     help_text_li = []
-    for att in ['max_value', 'min_value', 'max_length', 'min_length']:
+    for att in ['max_value', 'min_value', 'max_length', 'min_length', 'max_digits', 'sep', 'field', 'seps', 'fields', 'regex']:
         val = getattr(field, att, None)
         if val is not None:
-            help_text_li.append('%s: %s' % (att[:3], val))
+            help_text_li.append('%s: %s' % (att, val))
     return '; '.join(help_text_li)
 
 
@@ -88,7 +87,7 @@ def _wrap_field(fieldclass, methods=()):
         elif self.default is not empty:
             kwargs.setdefault('required', True)
         init_method(self, *args, **kwargs)
-        self.help_text = smart_help_text(self)
+        self.field_info = field_info(self)
 
     to_python_method = fieldclass.to_python
     @wraps(to_python_method)
@@ -137,7 +136,6 @@ def wrap_field(methods=()):
 for _fieldclass_name in fields.__all__[1:]:
     six.exec_('{0} = _wrap_field(fields.{0})'.format(_fieldclass_name))
 
-del _fieldclass_name
 
 # overwrite BooleanField and NullBooleanField to accept 0,1
 @wrap_field(methods=('to_python', ))

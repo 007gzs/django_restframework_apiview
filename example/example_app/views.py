@@ -103,46 +103,39 @@ class UserInfo(UserAPIBase):
         return self.get_default_context(user_info=UserSerializer(request.user).data)
 
 
-# @site
-# class ParamFieldInfo(APIBase):
+@site
+class ParamFieldInfo(APIBase):
 
-#     name = 'Param Field Info'
+    name = 'Param Field Info'
 
-#     def get_context(self, request, *args, **kwargs):
-#         return self.get_default_context(params=map(lambda x: {x:getattr(request.params, x)}, request.params._bounded_form.cleaned_data.keys()))
+    def get_context(self, request, *args, **kwargs):
+        return self.get_default_context(params=map(lambda x: {x:getattr(request.params, x)}, request.params._bounded_form.cleaned_data.keys()))
 
-#     class Meta:
-#         path = 'param_file_info'
-#         param_fields = (
-#             ('boolean_field', fields.BooleanField(help_text='Boolean Field', required=False)),
-#             ('char_field', fields.CharField(help_text='Char Field', required=False)),
-#             ('choice_field', fields.ChoiceField(help_text='Choice Field', required=False)),
-#             ('combo_field', fields.ComboField(help_text='Combo Field', required=False)),
-#             ('date_field', fields.DateField(help_text='Date Field', required=False)),
-#             ('datetime_field', fields.DateTimeField(help_text='DateTime Field', required=False)),
-#             ('decimal_field', fields.DecimalField(help_text='Decimal Field', required=False)),
-#             ('duration_field', fields.DurationField(help_text='Duration Field', required=False)),
-#             ('email_field', fields.EmailField(help_text='Email Field', required=False)),
-#             ('file_field', fields.FileField(help_text='File Field', required=False)),
-#             ('float_field', fields.FloatField(help_text='Float Field', required=False)),
-#             ('genericipaddress_field', fields.GenericIPAddressField(help_text='GenericIPAddress Field', required=False)),
-#             ('image_field', fields.ImageField(help_text='Image Field', required=False)),
-#             ('integer_field', fields.IntegerField(help_text='Integer Field', required=False)),
-#             ('latitude_field', fields.LatitudeField(help_text='Latitude Field', required=False)),
-#             ('longitude_field', fields.LongitudeField(help_text='Longitude Field', required=False)),
-#             ('mobile_field', fields.MobileField(help_text='Mobile Field', required=False)),
-#             ('multiplechoice_field', fields.MultipleChoiceField(help_text='MultipleChoice Field', required=False)),
-#             ('nullboolean_field', fields.NullBooleanField(help_text='NullBoolean Field', required=False)),
-#             ('pairchar_field', fields.PairCharField(help_text='PairChar Field', required=False)),
-#             ('regex_field', fields.RegexField(regex=r'[a-zA-Z0-9]', help_text='Regex Field', required=False)),
-#             ('slug_field', fields.SlugField(help_text='Slug Field', required=False)),
-#             ('splitchar_field', fields.SplitCharField(help_text='SplitChar Field', required=False)),
-#             ('splitdatetime_field', fields.SplitDateTimeField(help_text='SplitDateTime Field', required=False)),
-#             ('time_field', fields.TimeField(help_text='Time Field', required=False)),
-#             ('timestamp_field', fields.TimestampField(help_text='Timestamp Field', required=False)),
-#             ('typedchoice_field', fields.TypedChoiceField(help_text='TypedChoice Field', required=False)),
-#             ('typedmultiplechoice_field', fields.TypedMultipleChoiceField(help_text='TypedMultipleChoice Field', required=False)),
-#             ('url_field', fields.URLField(help_text='URL Field', required=False)),
-#         )
+    class Meta:
+        path = 'param_file_info'
+        param_fields = (
+            ('boolean_field', fields.BooleanField(help_text='Boolean Field', required=False)),
+            ('nullboolean_field', fields.NullBooleanField(help_text='NullBoolean Field', required=False)),
+            ('char_field', fields.CharField(help_text='Char Field', max_length=64, min_length=12, required=False)),
+            ('email_field', fields.EmailField(help_text='Email Field', required=False)),
+            ('mobile_field', fields.MobileField(help_text='Mobile Field', required=False)),
+            ('url_field', fields.URLField(help_text='URL Field', required=False)),
+            ('ip_field', fields.GenericIPAddressField(help_text='GenericIPAddress Field', required=False)),
+            ('regex_field', fields.RegexField(regex=r'^[a-zA-Z0-9]*$', help_text='Regex Field', required=False)),
+            ('integer_field', fields.IntegerField(help_text='Integer Field', max_value=100, min_value=0, required=False)),
+            ('float_field', fields.FloatField(help_text='Float Field', max_value=360.0, min_value=0.0, required=False)),
+            ('latitude_field', fields.LatitudeField(help_text='Latitude Field', required=False)),
+            ('longitude_field', fields.LongitudeField(help_text='Longitude Field', required=False)),
+            ('decimal_field', fields.DecimalField(help_text='Decimal Field', max_digits=10, decimal_places=2, required=False)),
+            ('date_field', fields.DateField(help_text='Date Field', required=False)),
+            ('datetime_field', fields.DateTimeField(help_text='DateTime Field', required=False)),
+            ('time_field', fields.TimeField(help_text='Time Field', required=False)),
+            ('timestamp_field', fields.TimestampField(help_text='Timestamp Field', required=False)),
+            ('file_field', fields.FileField(help_text='File Field', required=False)),
+            ('image_field', fields.ImageField(help_text='Image Field', required=False)),
+            ('choice_field', fields.ChoiceField(help_text='Choice Field', choices=((0, 100), (1, "test")), required=False)),
+            ('splitchar_field', fields.SplitCharField(help_text='SplitChar Field', sep=",", field=int, required=False)),
+            ('pairchar_field', fields.PairCharField(help_text='PairChar Field', seps=('|', '.'), fields=(fields.IntegerField(), fields.IntegerField()), required=False)),
+        )
 
 urlpatterns = site.urlpatterns

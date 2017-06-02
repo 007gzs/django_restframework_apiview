@@ -51,7 +51,7 @@ class ComplexityValidator(ValidateMixin, BaseValidator):
     }
 
     def __init__(self, **kwargs):
-        self.min_types = kwargs.pop('min_types', self.min_length)
+        self.min_types = kwargs.pop('min_types', self.min_types)
         self.min_length = kwargs.pop('min_length', self.min_length)
         self.max_length = kwargs.pop('max_length', self.max_length)
 

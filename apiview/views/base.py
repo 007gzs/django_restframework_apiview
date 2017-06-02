@@ -104,7 +104,7 @@ class ViewOptions(object):
         if fields:
             f_attrs = fields
         else:
-            f_attrs = ['type_name', 'omit', 'default', 'help_text']
+            f_attrs = ['type_name', 'omit', 'default', 'help_text', 'field_info']
         fields = ['name'] + f_attrs
         f_lens = [len(field) for field in fields]
         rows = []

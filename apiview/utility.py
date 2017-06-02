@@ -136,14 +136,16 @@ def appendMediaURL(value):
 #         pic_field = pic_field.name
 #     return prase_url(request, appendMediaURL(pic_field))
 
+
 def hash_sha1(str):
     if not str or str.strip() == '':
-        return None;
+        return None
 
     mdTemp = hashlib.sha1()
-    mdTemp.update(str);
+    mdTemp.update(str)
 
     return mdTemp.hexdigest()
+
 
 def getServerIP():
     import socket
@@ -171,6 +173,7 @@ def colorValidate(color):
 
     return ''
 
+
 def sendEmail(subject, add_to, html_content):
     from django.conf import settings
 
@@ -193,12 +196,13 @@ def sendEmail(subject, add_to, html_content):
     msg.attach_alternative(html_content, "text/html")
     msg.send()
 
-def earth_distance(lat1,lon1,lat2,lon2):
+
+def earth_distance(lat1, lon1, lat2, lon2):
     radlat1 = (math.pi/180)*lat1
     radlat2 = (math.pi/180)*lat2
 
     radlon1 = (math.pi/180)*lon1
-    radlon2 = (math.pi/180)*lon2;
+    radlon2 = (math.pi/180)*lon2
 
     a=radlat1-radlat2
     b=radlon1-radlon2
@@ -335,18 +339,21 @@ def str_2_emoji(emoji_str):
             result=result+emoji_str[pos_list[pos][1]:len(emoji_str)]
     return result
 
+
 def datetime2timestamp(dtime):
     import time
     if not dtime:
         return 0
     return int(time.mktime(dtime.timetuple()))
 
+
 def timestamp2datetime(timestamp):
     return datetime.datetime.fromtimestamp(timestamp)
 
+
 def format_res_data(data):
     if isinstance(data, datetime.datetime):
-        return utility.datetime2timestamp(data)
+        return datetime2timestamp(data)
     elif hasattr(data, 'items'):
         for k, v in data.items():
             data[k] = format_res_data(v)
@@ -359,24 +366,28 @@ def format_res_data(data):
     else:
         return data
 
+
 #把字典内容赋值给对象属性
 def copy_dict2obj(dict, obj):
     if not dict or not obj: return
     for key in dict.keys():
         setattr(obj, key, dict[key])
 
+
 def percentage(i1, i2):
     if i2 == 0: return(None)
     return round((i1 * 1.0) / (i2 * 100.0),2)
+
 
 def time_to_second(t):
     if not t or not isinstance(t, datetime.time):
         return 0
     return t.hour * 3600 + t.minute * 60 + t.second
 
+
 #des加解密
 def des_encode(inputdes, key):
-    from utils import des
+    from . import des
     try:
         des_enc = des.des(key[:8], padmode=des.PAD_PKCS5)
         if isinstance(inputdes, unicode):
@@ -393,7 +404,7 @@ def des_encode(inputdes, key):
 
 
 def des_decode(inputdes, key):
-    from utils import des
+    from . import des
 
     debase64 = None
     try:
@@ -447,6 +458,7 @@ def get_host_from_url(url):
         port = 80
     return host, port
 
+
 def date_format(date_str):
     try:
         _date = datetime.datetime.strptime(date_str, '%Y-%m-%d').date()
@@ -454,15 +466,17 @@ def date_format(date_str):
     except:
         return None
 
+
 def month_from_date(day):
     import calendar
     if type(day) in (str, unicode):
         day = datetime.datetime.strptime(day, '%Y-%m-%d').date()
     month_code = day.strftime("%Y-%m")
     wday, monthRange = calendar.monthrange(day.year, day.month)
-    month_begin = date(day.year, day.month, 1)
+    month_begin = datetime.date(day.year, day.month, 1)
     month_end = datetime.date(day.year, day.month, monthRange)
     return month_code, month_begin, month_end
+
 
 def week_from_date(day):
     if type(day) in (str, unicode):
@@ -472,6 +486,7 @@ def week_from_date(day):
     weekend = day + relativedelta(weekday=SU(1))
     week_code = '%d_%d' % (day.isocalendar()[0], day.isocalendar()[1])
     return week_code, weekbegin, weekend
+
 
 def fields_verify(model_admin, field_names, only_fields=False):
     from django.contrib.admin.utils import lookup_field
@@ -486,6 +501,7 @@ def fields_verify(model_admin, field_names, only_fields=False):
                 if hasattr(model_admin, field_name):
                     real_field_names.append(field_name)
     return real_field_names
+
 
 def get_qrimgurl_by_content(request, content, **kwargs):
     import qrcode
@@ -502,6 +518,7 @@ def get_qrimgurl_by_content(request, content, **kwargs):
     fp.close()
     qrurl = request.build_absolute_uri('/')[:-1] + settings.MEDIA_URL + filename
     return qrurl
+
 
 def check_time(time_to_check, on_time, off_time):
     if on_time > off_time:
