@@ -67,10 +67,27 @@ def field_info(field):
     if hasattr(field, 'choices'):
         return '; '.join([': '.join(map(force_text, choice)) for choice in field.choices])
     help_text_li = []
-    for att in ['max_value', 'min_value', 'max_length', 'min_length', 'max_digits', 'sep', 'field', 'seps', 'fields', 'regex']:
+    for att in ['max_value', 'min_value', 'max_length', 'min_length', 'max_digits', 'sep', 'seps', 'regex']:
         val = getattr(field, att, None)
         if val is not None:
             help_text_li.append('%s: %s' % (att, val))
+    if hasattr(field, 'fields'):
+        h_text = []
+        for f in field.fields:
+            if isinstance(f, Field):
+                h_text.append("%s" % f.__class__.__name__)
+            elif type(f) == type:
+                h_text.append("%s" % f.__name__)
+            else:
+                h_text.append('%s' % f)
+        help_text_li.append("fields : (%s)" % ",".join(h_text))
+    if hasattr(field, 'field'):
+        if isinstance(field.field, Field):
+            help_text_li.append("field : %s" % field.field.__class__.__name__)
+        elif type(field.field) == type:
+            help_text_li.append('field : %s' % field.field.__name__)
+        else:
+            help_text_li.append('field : %s' % field.field)
     return '; '.join(help_text_li)
 
 
