@@ -1,3 +1,5 @@
+#! /usr/bin/env python
+# encoding: utf-8
 """
 Definition of the rest framework compatible view class
 """

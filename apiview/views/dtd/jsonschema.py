@@ -1,3 +1,5 @@
+#! /usr/bin/env python
+# encoding: utf-8
 from __future__ import unicode_literals, absolute_import
 
 # JSONSCHEMA is a simple and well functional wrapped JSON validator

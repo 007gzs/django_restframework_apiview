@@ -1,4 +1,4 @@
-#! usr/bin/env python
+#! /usr/bin/env python
 # encoding: utf-8
 
 from __future__ import unicode_literals, absolute_import

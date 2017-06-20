@@ -1,3 +1,5 @@
+#! /usr/bin/env python
+# encoding: utf-8
 from os import environ
 
 from django.template import Library

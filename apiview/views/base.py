@@ -1,3 +1,5 @@
+#! /usr/bin/env python
+# encoding: utf-8
 """
 Declare the metaclass of the views to manage view generation
 """

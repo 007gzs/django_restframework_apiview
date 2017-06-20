@@ -1,3 +1,5 @@
+#! /usr/bin/env python
+# encoding: utf-8
 from django import forms
 try:
     from django.forms.util import ErrorDict

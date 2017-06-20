@@ -1,3 +1,5 @@
+#! /usr/bin/env python
+# encoding: utf-8
 """
 WSGI config for example project.
 
