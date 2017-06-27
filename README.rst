@@ -1,6 +1,9 @@
 #############################
 Django REST_framework APIView
 #############################
+.. image:: https://travis-ci.org/007gzs/django_restframework_apiview.svg?branch=master
+       :target: https://travis-ci.org/007gzs/django_restframework_apiview
+
 ***********
 Screenshots
 ***********
