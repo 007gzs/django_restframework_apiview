@@ -1,6 +1,11 @@
 #############################
 Django REST_framework APIView
 #############################
+***********
+Screenshots
+***********
+.. image:: https://github.com/007gzs/django_restframework_apiview/raw/master/img/demo.jpg
+
 ****************
 User in your app
 ****************
