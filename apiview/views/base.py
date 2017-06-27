@@ -18,7 +18,7 @@ from django.conf import settings
 from django.views.generic import View as DjangoView
 from django.utils import six
 from django.utils.functional import cached_property
-from django.utils.encoding import force_text
+from django.utils.encoding import force_text, force_str
 
 from .utils import split_camel_name
 from .param import Param
@@ -84,7 +84,7 @@ class ViewOptions(object):
         form_attrs = dict(self.param_fields)
         form_attrs['__module__'] = cls.__module__
         cls.param_form = type(self.form)(
-            cls.__name__ + 'Form',
+            force_str(cls.__name__ + 'Form'),
             (self.form, ),
             form_attrs)
 
