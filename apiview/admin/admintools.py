@@ -1,0 +1,697 @@
+#! usr/bin/env python
+# encoding: utf-8
+
+from __future__ import absolute_import, unicode_literals
+
+import copy
+import mimetypes
+from functools import wraps
+
+import tablib
+from django import forms
+from django.core.exceptions import PermissionDenied
+from django.contrib import admin
+from django.contrib.admin.utils import flatten_fieldsets, unquote
+from django.contrib.auth import get_permission_codename
+from django.contrib.contenttypes.models import ContentType
+from django.forms.models import modelform_factory
+from django.db import models, DEFAULT_DB_ALIAS, DJANGO_VERSION_PICKLE_KEY
+from django.db.models.constants import LOOKUP_SEP
+from django.db.models.query import QuerySet
+from django.db.models.fields.related import RelatedField
+from django.contrib import messages
+from django.http import HttpResponseRedirect, Http404
+from django.shortcuts import get_object_or_404
+from django.template.response import TemplateResponse
+from django.utils.translation import ugettext as _
+from django.utils.encoding import force_text
+from django.utils.text import capfirst
+from django.utils.version import get_version
+from import_export.admin import (
+    ExportMixin as _ExportMixin,
+    ImportMixin as _ImportMixin,
+    ImportExportMixin as _ImportExportMixin,
+)
+from import_export.resources import ModelDeclarativeMetaclass, ModelResource
+
+from . import widgets
+from apiview import mailtools
+
+from django.contrib.admin.views import main
+
+FIX_COLUMN_VAR = 'fc'
+main.IGNORED_PARAMS += (FIX_COLUMN_VAR,)
+
+
+def set_cache(method, mask, result):
+    '''设置方法结果缓存'''
+    if hasattr(method, 'im_self'):
+        instance = method.im_self
+        method_cache = getattr(instance, '_method_cache_', {})
+        cache = method_cache.get(method.__name__, {})
+        cache['mask'] = mask
+        cache['result'] = result
+        method_cache[method.__name__] = cache
+        instance._method_cache_ = method_cache
+    else:
+        method._mask_ = mask
+        method._result_ = result
+
+
+def get_cache(method, mask, default=None):
+    '''获取方法结果缓存，在识别码变更时清除缓存'''
+    if hasattr(method, 'im_self'):
+        instance = method.im_self
+        method_cache = getattr(instance, '_method_cache_', {})
+        cache = method_cache.get(method.__name__, {})
+        if cache.get('mask', None) == mask:
+            return cache.get('result', default)
+        method_cache.pop(method.__name__, None)
+    elif hasattr(method, '_mask_'):
+        if method._mask_ == mask:
+            return method._result_
+        del method._mask_
+        del method._result_
+    return default
+
+
+def get_mask(*args):
+    return map(id, args)
+
+
+def get_normal_fields(model):
+    fields = []
+    for field in model._meta.concrete_fields:
+        if not (field.primary_key
+                or isinstance(field, RelatedField)
+                or isinstance(field, models.FileField)
+                or field.name.startswith('_')):
+            fields.append(field)
+    return fields
+
+
+class BaseModelResource(ModelResource):
+    '''
+    Use fields' verbose names as column names
+    '''
+
+    @classmethod
+    def field_from_django_field(cls, field_name, django_field, readonly):
+        field = super(BaseModelResource, cls).field_from_django_field(
+            field_name, django_field, readonly
+        )
+        if field:
+            field.column_name = django_field.verbose_name
+        return field
+
+    def export(self, queryset=None):
+        """
+        Exports a resource.
+        """
+        if queryset is None:
+            queryset = self.get_queryset()
+        headers = self.get_export_headers()
+        data = tablib.Dataset(headers=headers)
+
+        if isinstance(queryset, QuerySet):
+            if queryset._prefetch_related_lookups:
+                # Could not enjoy the 'prefetch_related' method's benefits when
+                # using 'iterator' to generate data
+                iterable = iter(queryset)
+            else:
+                # Iterate without the queryset cache, to avoid wasting memory
+                # when exporting large datasets.
+                iterable = queryset.iterator()
+        else:
+            iterable = queryset
+        for obj in iterable:
+            data.append(self.export_resource(obj))
+        return data
+
+
+def modelresource_factory(model, resource_class=BaseModelResource):
+    meta = copy.copy(resource_class._meta)
+    meta.model = model
+    class_name = model.__name__ + str('Resource')
+    class_attrs = {'Meta': meta, }
+    return ModelDeclarativeMetaclass(class_name, (resource_class,), class_attrs)
+
+
+def extend_admincls(*admin_classes):
+    assert (admin_classes)
+    return type(b'_Admin', admin_classes, {})
+
+
+def get_widget(field):
+    if isinstance(field, models.ImageField):
+        return widgets.ImageWidget
+    return widgets.TagWidget
+
+
+def get_fieldwidget(field):
+    if isinstance(field, models.ImageField):
+        return widgets.ImageFieldWidget
+    return widgets.FieldWidget
+
+
+def _lookup_field(name, obj):
+    splices = name.split(LOOKUP_SEP)
+    field_name = splices[-1]
+    for gen in splices[:-1]:
+        obj = getattr(obj, gen)
+
+    field = obj._meta.get_field(field_name)
+    if isinstance(field_name, RelatedField):
+        label = field.rel.field.verbose_name
+    else:
+        label = field.verbose_name
+
+    return field, label, getattr(obj, field.attname)
+
+
+def format_field(verbose, field, options=None, **kwargs):
+    '''
+    Format field with given widgets or default
+
+    Example:
+        class MyAdminClass(models.ModelAdmin):
+            list_display = [format_field(
+                verbose=u'名字', field='username', options={
+                    'style': 'color:red'
+                }), ...]
+    '''
+    name = field
+    widget_opts = options or {}
+
+    def _format_field(obj):
+        field, label, value = _lookup_field(name, obj)
+        attrs = widget_opts.copy()
+        widgetclass = attrs.pop('widgetclass', None)
+        if widgetclass is None:
+            widgetclass = get_widget(field)
+        widget = widgetclass(attrs)
+        return widget.render(label, value, None)
+
+    _format_field.short_description = verbose
+    _format_field.allow_tags = True
+    for att, val in kwargs.iteritems():
+        setattr(_format_field, att, val)
+    return _format_field
+
+
+def collapse_fields(verbose, fields, options=None, **kwargs):
+    '''
+    Collapse_fields into one field in changelist_view in admin site
+    
+    Example:
+        class MyAdminClass(models.ModelAdmin):
+            list_display = [collapse_fields(
+                verbose=u'名字', fields=('username', 'name'), options={
+                    'username':{'style': 'color:red'}
+                }), ...]
+    '''
+    widget_map = {}
+    for name in fields:
+        if options:
+            widget_kwargs = options.get(name, {})
+            widgetclass = widget_kwargs.pop('widgetclass', None)
+            widget_map[name] = {
+                'widgetclass': widgetclass,
+                'attrs': widget_kwargs,
+            }
+        else:
+            widget_map[name] = {}
+
+    def format_fields(obj):
+        html = []
+        for name in fields:
+            field, label, value = _lookup_field(name, obj)
+            widgetclass = widget_map[name].get('widgetclass', None) \
+                          or get_fieldwidget(field)
+            widget = widgetclass(widget_map[name].get('attrs', {}))
+            html.append(widget.render(name, (label, value), None))
+        return ''.join(html)
+
+    format_fields.short_description = verbose
+    format_fields.allow_tags = True
+    for att, val in kwargs.iteritems():
+        setattr(format_fields, att, val)
+    return format_fields
+
+
+def limit_queryset(limits=None, base=QuerySet):
+    '''
+    return LimitQuerySet to set max rows and count returned by Database
+    '''
+
+    class LimitQuerySet(LimitQuerySetMixin, base):
+        LIMIT = limits
+
+    return LimitQuerySet
+
+
+# 所有proxy中ModelAdmin的基类
+class ProxyModelAdmin(admin.ModelAdmin):
+    '''default Admin class used by proxy|real models
+    '''
+
+    db_for_read = DEFAULT_DB_ALIAS
+    db_for_write = DEFAULT_DB_ALIAS
+
+    # remove "__str__"
+    list_display = []
+
+    # Extend options to manage site
+    # extend field exclude RelatedField and PrimaryKey fields into list_display
+    extend_normal_fields = False
+    exclude_list_display = []
+    tails = []
+    # extend LimitQuerySet
+    limits = 100
+    # manage Add/Change view
+    addable = True
+    editable = True
+    changeable = True
+    # manage Change view
+    change_view_readonly_fields = []
+    editable_fields = None
+
+    # precision
+    precision = 2
+
+    # cache key serials set
+    cache_serial = set()
+
+    actions = ['_reset']
+
+    def _reset(self, request, querset):
+        pass
+
+    _reset.short_description = '清空选项'
+
+    def get_editable_fields(self, request, obj=None):
+        if self.editable_fields == forms.ALL_FIELDS:
+            return None
+        elif self.opts.app_label != 'slWashCar' and self.editable_fields is None:
+            return ()
+
+        return self.editable_fields
+
+    def get_queryset(self, request):
+        '''extend LimitQuerySet to manage rows
+        '''
+        queryset = super(ProxyModelAdmin, self).get_queryset(self, request)
+
+        if self.limits:
+            klass = limit_queryset(self.limits, queryset.__class__)
+            queryset = klass.from_queryset(queryset)
+
+        if not self.has_delete_permission(request):
+            return queryset.using(self.db_for_read)
+        else:
+            return queryset.using(self.db_for_write)
+
+    def has_delete_permission(self, request, obj=None):
+        '''add inspection of changeable and editable option
+        '''
+        if self.editable:
+            return super(ProxyModelAdmin, self).has_delete_permission(
+                self, request, obj)
+        return False
+
+    def has_delete_perm(self, request, obj=None):
+        '''user permission checking inside the view logic
+        '''
+        return super(ProxyModelAdmin, self).has_delete_permission(
+            self, request, obj)
+
+    def has_change_permission(self, request, obj=None):
+        '''add inspection of changeable option
+        '''
+        if obj:
+            if self.changeable:
+                return super(ProxyModelAdmin, self).has_delete_permission(
+                    self, request, obj)
+        else:
+            return super(ProxyModelAdmin, self).has_change_permission(
+                self, request, obj)
+
+        return False
+
+    def has_change_perm(self, request, obj=None):
+        '''user permission checking inside the view logic
+        '''
+        return super(ProxyModelAdmin, self).has_change_permission(
+            self, request, obj)
+
+    def has_add_permission(self, request):
+        '''add inspection of addable and editable option
+        '''
+        if self.addable and self.editable:
+            return super(ProxyModelAdmin, self).has_add_permission(self, request)
+        return False
+
+    def has_add_perm(self, request, obj=None):
+        '''user permission checking inside the view logic
+        '''
+        return super(ProxyModelAdmin, self).has_add_permission(
+            self, request, obj)
+
+    def get_readonly_fields(self, request, obj=None):
+        mask = get_mask(request, obj)
+        readonly_fields = get_cache(self.get_readonly_fields, mask)
+        if readonly_fields is None:
+            readonly_fields = list(super(ProxyModelAdmin, self).get_readonly_fields(request, obj))
+            set_cache(self.get_readonly_fields, mask, readonly_fields)
+        return readonly_fields
+
+    def get_form(self, request, obj=None, **kwargs):
+        if kwargs.has_key('fields'):
+            fields = kwargs.get('fields')
+        else:
+            # 'get_fieldsets' would call 'get_form' again with kwargs: field=None
+            fields = flatten_fieldsets(self.get_fieldsets(request, obj))
+
+        # get a blank form to fetch all fields
+        form = modelform_factory(self.model, kwargs.get('form', self.form), exclude=())
+        readonly_fields = self.get_readonly_fields(request, obj)
+        readonly_fields_set = set(readonly_fields)
+
+        if fields is None or fields is forms.ALL_FIELDS:
+            fields = form.base_fields.keys()
+
+        if not kwargs.has_key('exclude'):
+            if self.exclude is None:
+                exclude = []
+            else:
+                exclude = list(self.exclude)
+            exclude.extend(self.get_readonly_fields(request, obj))
+
+            to_exclude_fields = []
+            for name in fields:
+                field = form.base_fields.get(name, None)
+                if field is None:
+                    continue
+                val = field.prepare_value(getattr(obj, name, None))
+                if val is None:
+                    continue
+                elif name in readonly_fields_set:
+                    continue
+                elif isinstance(field, forms.ModelMultipleChoiceField):
+                    relates = list(val.all().values_list('pk', flat=True))
+                    if not relates:
+                        continue
+
+                        # queryset = BCity.manage_city_queryset(request, field.queryset)
+                        # key = field.to_field_name or 'pk'
+                        # if len(relates) != queryset.filter(**{'%s__in' % key: relates}).count():
+                        #     to_exclude_fields.append(name)
+                        #     readonly_fields_set.add(name)
+                # elif isinstance(field, forms.ModelChoiceField):
+                #     queryset = BCity.manage_city_queryset(request, field.queryset)
+                #     key = field.to_field_name or 'pk'
+                #     if not queryset.filter(**{key: val}).exists():
+                #         to_exclude_fields.append(name)
+                #         readonly_fields_set.add(name)
+                elif isinstance(field, forms.ChoiceField):
+                    if field.choices and val not in dict(field.choices):
+                        to_exclude_fields.append(name)
+                        readonly_fields_set.add(name)
+
+            if to_exclude_fields:
+                exclude.extend(to_exclude_fields)
+                readonly_fields.extend(to_exclude_fields)
+            kwargs['exclude'] = exclude
+
+        kwargs['fields'] = fields
+        form = super(ProxyModelAdmin, self).get_form(self, request, obj, **kwargs)
+        # remove the custom fields from base_fields which is in 'exlcude' or not
+        # in 'fields' to prevent from checking these fields
+        exclude = form._meta.exclude or ()
+        for name in form.declared_fields:
+            if name in exclude or name not in fields:
+                form.base_fields.pop(name, None)
+        return form
+
+    def history_view(self, request, object_id, extra_context=None):
+        '''
+        The 'history' admin view for this model.
+
+        Combine all real models' history into concrete model history view
+        '''
+        from django.contrib.admin.models import LogEntry
+        # First check if the user can see this history.
+        model = self.model
+        obj = get_object_or_404(model, pk=unquote(object_id))
+
+        if not self.has_change_permission(request, obj):
+            raise PermissionDenied
+
+        # Then get the history for this object.
+        opts = model._meta
+        app_label = opts.app_label
+        content_types = [ContentType.objects.get_for_model(model, for_concrete_model=False)]
+        for submodel in model.__subclasses__():
+            content_types.append(ContentType.objects.get_for_model(submodel, for_concrete_model=False))
+        action_list = LogEntry.objects.filter(
+            object_id=unquote(object_id),
+            content_type__in=content_types,
+        ).select_related().order_by('-action_time')
+
+        context = dict(
+            self.admin_site.each_context(request),
+            title=_('Change history: %s') % force_text(obj),
+            action_list=action_list,
+            module_name=capfirst(force_text(opts.verbose_name_plural)),
+            object=obj,
+            app_label=app_label,
+            opts=opts,
+            preserved_filters=self.get_preserved_filters(request),
+        )
+        context.update(extra_context or {})
+
+        request.current_app = self.admin_site.name
+
+        return TemplateResponse(request, self.object_history_template or [
+            "admin/%s/%s/object_history.html" % (app_label, opts.model_name),
+            "admin/%s/object_history.html" % app_label,
+            "admin/object_history.html"
+        ], context)
+
+
+def check_perms(*perms):
+    """
+    Returns True if the given request has permissions to manage an object.
+    """
+
+    def inner(func):
+        @wraps(func)
+        def wrapper(admin, request, *args, **kwargs):
+            opts = admin.opts
+            for perm in perms:
+                codename = get_permission_codename(perm, opts)
+                if not request.user.has_perm(
+                                "%s.%s" % (opts.app_label, codename)):
+                    raise PermissionDenied
+            return func(admin, request, *args, **kwargs)
+
+        return wrapper
+
+    return inner
+
+
+class ImportMixin(_ImportMixin):
+    @check_perms('add', 'delete')
+    def import_action(self, request, *args, **kwargs):
+        return _ImportMixin.import_action(self, request, *args, **kwargs)
+
+    @check_perms('add', 'delete')
+    def process_import(self, request, *args, **kwargs):
+        return _ImportMixin.process_import(self, request, *args, **kwargs)
+
+    def get_resource_class(self):
+        if not self.resource_class:
+            return modelresource_factory(self.model, resource_class=BaseModelResource)
+        elif self.resource_class._meta.model is None:
+            return modelresource_factory(self.model, resource_class=self.resource_class)
+        else:
+            return self.resource_class
+
+
+class LimitQuerySetMixin(object):
+    LIMIT = None
+
+    def count(self):
+        count = super(LimitQuerySetMixin, self).count()
+        if self.LIMIT > 0:
+            return min(count, self.LIMIT)
+        return count
+
+    @classmethod
+    def from_queryset(cls, other, **kwargs):
+        '''根据其他QuerySet对象的数据生成实例'''
+        query = other.query.clone()
+        if other._sticky_filter:
+            query.filter_is_sticky = True
+        clone = cls(model=other.model, query=query, using=other._db, hints=other._hints)
+        clone._for_write = other._for_write
+        clone._prefetch_related_lookups = other._prefetch_related_lookups[:]
+        clone._known_related_objects = other._known_related_objects
+        clone._iterable_class = other._iterable_class
+        clone._fields = other._fields
+
+        clone.__dict__.update(kwargs)
+        return clone
+
+    def iterator(self):
+        if self.LIMIT is not None:
+            if self.query.low_mark >= self.LIMIT:
+                return iter(())
+            elif (self.query.high_mark is None
+                  or self.query.high_mark > self.LIMIT):
+                new_qs = self._clone()
+                new_qs.query.high_mark = self.LIMIT
+                return new_qs.iterator()
+        return super(LimitQuerySetMixin, self).iterator()
+
+
+class DynQuerySet(LimitQuerySetMixin, QuerySet):
+    LIMIT = None
+
+    def __getstate__(self):
+        '''pickle adapt, to prevent _fetch_all data'''
+        obj_dict = self.__dict__.copy()
+        obj_dict[DJANGO_VERSION_PICKLE_KEY] = get_version()
+        return obj_dict
+
+
+def mail_export_data(filename, to, model, resource_class, format_class, queryset):
+    '''
+    Used to export data
+    '''
+    if not resource_class._meta.model:
+        resource = modelresource_factory(model, resource_class=resource_class)()
+    else:
+        resource = resource_class()
+    file_format = format_class()
+
+    data = resource.export(queryset)
+    export_data = file_format.export_data(data)
+
+    content_type = mimetypes.guess_type(filename)[0]
+    mailtools.mail(
+        '导出结果：' + filename,
+        to=to,
+        body='请查看附件',
+        attachments=[(filename, export_data, content_type)])
+
+
+class HumanizedModelResource(BaseModelResource):
+    '''
+    Humanize related fields' value
+
+    Note: this would slow down export processing, even if get related objects
+          with 'prefetch_related' to access DB once per field
+
+          to be more efficiency, overwrite 'get_export_date' like this:
+
+            def get_export_data(self, file_format, queryset):
+                fields = ["related_field1", ]
+                headers = ["related_header1", ]
+                for field in self.get_normal_fields():
+                    fields.append(field.attname)
+                    headers.append(field.verbose_name)
+
+                data = tablib.Dataset(headers=headers)
+                for row in queryset.values_list(*fields):
+                    data.append(row)
+                return file_format.export_data(data)
+
+    '''
+
+    @classmethod
+    def field_from_django_field(cls, field_name, django_field, readonly):
+        field = super(HumanizedModelResource, cls).field_from_django_field(
+            field_name, django_field, readonly
+        )
+        if field:
+            localize_method = 'dehydrate_%s' % field_name
+            if django_field.choices:
+                setattr(cls, localize_method,
+                        lambda self, obj: getattr(obj, 'get_%s_display' % \
+                                                  django_field.name
+                                                  )())
+            elif isinstance(django_field, RelatedField):
+                setattr(cls, localize_method,
+                        lambda self, obj: unicode(getattr(obj, django_field.name)))
+        return field
+
+
+class ExportMixin(_ExportMixin):
+    @check_perms('change')
+    def export_action(self, request, *args, **kwargs):
+        if request.method == "POST":
+            if not request.user.email:
+                self.message_user(request, u'请设置您的邮箱, 以接收导出数据', messages.ERROR)
+            elif not request.POST['file_format']:
+                # prompt error
+                return _ExportMixin.export_action(self, request, *args, **kwargs)
+            else:
+                formats = self.get_export_formats()
+                try:
+                    format_index = int(request.POST['file_format'])
+                    file_format = formats[format_index]()
+                except Exception:
+                    raise Http404
+
+                # from swanleaf.celery.celeryTasks import async_call
+                filename = self.get_export_filename(file_format)
+                queryset = self.get_export_queryset(request)
+                queryset = DynQuerySet.from_queryset(queryset)
+                # queryset = queryset.using(BSlave.db_slave1)
+                queryset = queryset.using(DEFAULT_DB_ALIAS)
+                if self.resource_class is None:
+                    if isinstance(self, ImportMixin):
+                        resource_class = BaseModelResource
+                    else:
+                        resource_class = HumanizedModelResource
+                else:
+                    resource_class = self.resource_class
+
+                # if (config.SL_EXPORT_DATA_NUM > 0
+                #         and queryset.count() > config.SL_EXPORT_DATA_NUM):
+                #
+                #     if config.SL_EXPORT_DATA_STRICT:
+                #         self.message_user(
+                #             request,
+                #             u'导出数据量超出限制(%s条)，请添加筛选条件后重试' % (
+                #                 config.SL_EXPORT_DATA_NUM, ),
+                #             messages.ERROR)
+                #         return HttpResponseRedirect('../?' + request.META['QUERY_STRING'])
+                #     else:
+                #         self.message_user(
+                #             request, u'导出数据量过多，处理时间较长，请耐心等待邮件',
+                #             messages.WARNING)
+                mail_export_data(filename, request.user.email, self.model,
+                                 resource_class, formats[format_index], queryset)
+                # async_call(
+                #     mail_export_data, filename, request.user.email, self.model,
+                #     resource_class, formats[format_index], queryset)
+
+                self.message_user(
+                    request, u'数据将发送到您的公司邮箱, 请注意查收',
+                    messages.SUCCESS)
+            return HttpResponseRedirect('../?' + request.META['QUERY_STRING'])
+        return _ExportMixin.export_action(self, request, *args, **kwargs)
+
+    def get_resource_class(self):
+        if not self.resource_class:
+            return modelresource_factory(self.model, resource_class=HumanizedModelResource)
+        elif self.resource_class._meta.model is None:
+            return modelresource_factory(self.model, resource_class=self.resource_class)
+        else:
+            return self.resource_class
+
+
+class ImportExportMixin(ImportMixin, ExportMixin):
+    change_list_template = _ImportExportMixin.change_list_template
