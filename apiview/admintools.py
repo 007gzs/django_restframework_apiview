@@ -7,25 +7,28 @@ import copy
 import mimetypes
 from functools import wraps
 
-import tablib
+
 from django import forms
-from django.core.exceptions import PermissionDenied
 from django.contrib import admin
+from django.contrib import messages
 from django.contrib.admin.utils import flatten_fieldsets, unquote
+from django.contrib.admin.views import main
 from django.contrib.auth import get_permission_codename
 from django.contrib.contenttypes.models import ContentType
-from django.forms.models import modelform_factory
+from django.core.exceptions import PermissionDenied
 from django.db import models, DEFAULT_DB_ALIAS, DJANGO_VERSION_PICKLE_KEY
 from django.db.models.constants import LOOKUP_SEP
-from django.db.models.query import QuerySet
 from django.db.models.fields.related import RelatedField
-from django.contrib import messages
+from django.db.models.query import QuerySet
+from django.forms.models import modelform_factory
 from django.http import HttpResponseRedirect, Http404
 from django.shortcuts import get_object_or_404
 from django.template.response import TemplateResponse
-from django.utils.translation import ugettext as _
+from django.urls import reverse, NoReverseMatch
 from django.utils.encoding import force_text
+from django.utils.http import urlencode
 from django.utils.text import capfirst
+from django.utils.translation import ugettext as _
 from django.utils.version import get_version
 from import_export.admin import (
     ExportMixin as _ExportMixin,
@@ -34,10 +37,7 @@ from import_export.admin import (
 )
 from import_export.resources import ModelDeclarativeMetaclass, ModelResource
 
-from . import widgets
-from apiview import mailtools
-
-from django.contrib.admin.views import main
+from apiview import mailtools, widgets
 
 FIX_COLUMN_VAR = 'fc'
 main.IGNORED_PARAMS += (FIX_COLUMN_VAR,)
@@ -105,6 +105,8 @@ class BaseModelResource(ModelResource):
         return field
 
     def export(self, queryset=None):
+
+        import tablib
         """
         Exports a resource.
         """
@@ -194,14 +196,14 @@ def format_field(verbose, field, options=None, **kwargs):
 
     _format_field.short_description = verbose
     _format_field.allow_tags = True
-    for att, val in kwargs.iteritems():
+    for att, val in kwargs.items():
         setattr(_format_field, att, val)
     return _format_field
 
 
 def collapse_fields(verbose, fields, options=None, **kwargs):
     '''
-    Collapse_fields into one field in changelist_view in admin site
+    Collapse_fields into one field in changelist_view in modeladmin site
     
     Example:
         class MyAdminClass(models.ModelAdmin):
@@ -234,7 +236,7 @@ def collapse_fields(verbose, fields, options=None, **kwargs):
 
     format_fields.short_description = verbose
     format_fields.allow_tags = True
-    for att, val in kwargs.iteritems():
+    for att, val in kwargs.items():
         setattr(format_fields, att, val)
     return format_fields
 
@@ -248,6 +250,15 @@ def limit_queryset(limits=None, base=QuerySet):
         LIMIT = limits
 
     return LimitQuerySet
+
+
+def get_related_model_fields(model, rel):
+    '''通过model下rel对象获取相关字段或关联属性'''
+    # 多对多关联的REL对象本身不区分关系前后
+    # 相关代理类做同样处理
+    if rel.field.model._meta.concrete_model == model._meta.concrete_model:
+        return rel.field, rel.get_related_field()
+    return rel.get_related_field(), rel.field
 
 
 # 所有proxy中ModelAdmin的基类
@@ -292,7 +303,7 @@ class ProxyModelAdmin(admin.ModelAdmin):
     def get_editable_fields(self, request, obj=None):
         if self.editable_fields == forms.ALL_FIELDS:
             return None
-        elif self.opts.app_label != 'slWashCar' and self.editable_fields is None:
+        elif self.editable_fields is None:
             return ()
 
         return self.editable_fields
@@ -300,7 +311,7 @@ class ProxyModelAdmin(admin.ModelAdmin):
     def get_queryset(self, request):
         '''extend LimitQuerySet to manage rows
         '''
-        queryset = super(ProxyModelAdmin, self).get_queryset(self, request)
+        queryset = super(ProxyModelAdmin, self).get_queryset(request)
 
         if self.limits:
             klass = limit_queryset(self.limits, queryset.__class__)
@@ -315,58 +326,52 @@ class ProxyModelAdmin(admin.ModelAdmin):
         '''add inspection of changeable and editable option
         '''
         if self.editable:
-            return super(ProxyModelAdmin, self).has_delete_permission(
-                self, request, obj)
+            return super(ProxyModelAdmin, self).has_delete_permission(request, obj)
         return False
 
     def has_delete_perm(self, request, obj=None):
         '''user permission checking inside the view logic
         '''
-        return super(ProxyModelAdmin, self).has_delete_permission(
-            self, request, obj)
+        return super(ProxyModelAdmin, self).has_delete_permission(request, obj)
 
     def has_change_permission(self, request, obj=None):
         '''add inspection of changeable option
         '''
         if obj:
             if self.changeable:
-                return super(ProxyModelAdmin, self).has_delete_permission(
-                    self, request, obj)
+                return super(ProxyModelAdmin, self).has_delete_permission(request, obj)
         else:
-            return super(ProxyModelAdmin, self).has_change_permission(
-                self, request, obj)
+            return super(ProxyModelAdmin, self).has_change_permission(request, obj)
 
         return False
 
     def has_change_perm(self, request, obj=None):
         '''user permission checking inside the view logic
         '''
-        return super(ProxyModelAdmin, self).has_change_permission(
-            self, request, obj)
+        return super(ProxyModelAdmin, self).has_change_permission(request, obj)
 
     def has_add_permission(self, request):
         '''add inspection of addable and editable option
         '''
         if self.addable and self.editable:
-            return super(ProxyModelAdmin, self).has_add_permission(self, request)
+            return super(ProxyModelAdmin, self).has_add_permission(request)
         return False
 
-    def has_add_perm(self, request, obj=None):
+    def has_add_perm(self, request):
         '''user permission checking inside the view logic
         '''
-        return super(ProxyModelAdmin, self).has_add_permission(
-            self, request, obj)
+        return super(ProxyModelAdmin, self).has_add_permission(request)
 
-    def get_readonly_fields(self, request, obj=None):
-        mask = get_mask(request, obj)
-        readonly_fields = get_cache(self.get_readonly_fields, mask)
-        if readonly_fields is None:
-            readonly_fields = list(super(ProxyModelAdmin, self).get_readonly_fields(request, obj))
-            set_cache(self.get_readonly_fields, mask, readonly_fields)
-        return readonly_fields
+    # def get_readonly_fields(self, request, obj=None):
+    #     mask = get_mask(request, obj)
+    #     readonly_fields = None # get_cache(self.get_readonly_fields, mask)
+    #     if readonly_fields is None:
+    #         readonly_fields = list(super(ProxyModelAdmin, self).get_readonly_fields(request, obj))
+    #         # set_cache(self.get_readonly_fields, mask, readonly_fields)
+    #     return readonly_fields
 
     def get_form(self, request, obj=None, **kwargs):
-        if kwargs.has_key('fields'):
+        if 'fields' in kwargs:
             fields = kwargs.get('fields')
         else:
             # 'get_fieldsets' would call 'get_form' again with kwargs: field=None
@@ -380,7 +385,7 @@ class ProxyModelAdmin(admin.ModelAdmin):
         if fields is None or fields is forms.ALL_FIELDS:
             fields = form.base_fields.keys()
 
-        if not kwargs.has_key('exclude'):
+        if 'exclude' not in kwargs:
             if self.exclude is None:
                 exclude = []
             else:
@@ -424,7 +429,7 @@ class ProxyModelAdmin(admin.ModelAdmin):
             kwargs['exclude'] = exclude
 
         kwargs['fields'] = fields
-        form = super(ProxyModelAdmin, self).get_form(self, request, obj, **kwargs)
+        form = super(ProxyModelAdmin, self).get_form(request, obj, **kwargs)
         # remove the custom fields from base_fields which is in 'exlcude' or not
         # in 'fields' to prevent from checking these fields
         exclude = form._meta.exclude or ()
@@ -435,7 +440,7 @@ class ProxyModelAdmin(admin.ModelAdmin):
 
     def history_view(self, request, object_id, extra_context=None):
         '''
-        The 'history' admin view for this model.
+        The 'history' modeladmin view for this model.
 
         Combine all real models' history into concrete model history view
         '''
@@ -477,6 +482,130 @@ class ProxyModelAdmin(admin.ModelAdmin):
             "admin/%s/object_history.html" % app_label,
             "admin/object_history.html"
         ], context)
+
+    def get_fieldsets(self, request, obj=None):
+        fieldsets = list(super(ProxyModelAdmin, self).get_fieldsets(request, obj))
+        if not self.has_delete_permission(request, obj):
+            list_display = self.get_list_display(request)
+            valid_f_names = flatten_fieldsets(fieldsets)
+            fields = [f for f in list_display if f in valid_f_names]
+            return [(None, {'fields': fields})]
+        return fieldsets
+
+    def get_readonly_fields(self, request, obj=None):
+        if obj and self.has_delete_permission(request, obj):
+            readonly_fields = list(super(ProxyModelAdmin, self).get_readonly_fields(request, obj))
+            readonly_fields_set = set(readonly_fields)
+            for field in self.change_view_readonly_fields:
+                if field not in readonly_fields_set:
+                    readonly_fields_set.add(field)
+                    readonly_fields.append(field)
+
+            editable_fields = self.get_editable_fields(request, obj)
+            if editable_fields is not None:
+                editable_fields_set = set(editable_fields)
+                declared_fields = self.fieldsets
+                if declared_fields:
+                    declared_fields = flatten_fieldsets(declared_fields)
+                else:
+                    declared_fields = [f.name for f in self.opts.fields]
+                for field in declared_fields:
+                    if (field not in editable_fields_set
+                            and field not in readonly_fields_set):
+                        readonly_fields_set.add(field)
+                        readonly_fields.append(field)
+            return readonly_fields
+        elif not self.has_delete_permission(request, obj):
+            return self.get_list_display(request)
+        else:
+            return list(super(ProxyModelAdmin, self).get_readonly_fields(request, obj))
+
+    def get_list_display(self, request):
+        '''
+        get all fields except PK and Relations if extend_normal_fields is True
+        '''
+
+        list_display = list(super(ProxyModelAdmin, self).get_list_display(request))
+        if not hasattr(request, '_access_rels'):
+            request._access_rels = []
+            for rel in self.opts.related_objects + tuple(r.rel for r in self.opts.many_to_many):
+                target_field, remote_field = get_related_model_fields(self.model, rel)
+                rel_opts = remote_field.model._meta
+                codename = get_permission_codename('change', rel_opts)
+                if request.user.has_perm('%s.%s' % (self.opts.app_label, codename)):
+                    try:
+                        uri = reverse('admin:%s_%s_changelist' % (
+                            self.opts.app_label, rel_opts.model_name))
+                    except NoReverseMatch:
+                        pass
+                    else:
+                        request._access_rels.append((uri, target_field, remote_field))
+
+        if request._access_rels:
+            self._access_rels = request._access_rels
+        else:
+            self._access_rels = request._access_rels
+
+        if not self.extend_normal_fields:
+            if self._access_rels:
+                list_display.append('get_all_relations')
+            return list_display
+
+        field_names = []
+        tails = []
+        while list_display:
+            name = list_display.pop(0)
+            if name in self.tails:
+                tails.append(name)
+            else:
+                field_names.append(name)
+
+        for field in self.get_normal_fields():
+            if field.name not in field_names:
+                if field.name in self.exclude_list_display:
+                    pass
+                elif field.name in self.tails:
+                    tails.append(field.name)
+                else:
+                    field_names.append(field.name)
+
+        field_names.extend(tails)
+        if self._access_rels:
+            field_names.append('get_all_relations')
+        return field_names
+
+    def get_normal_fields(self):
+        fields = []
+        exclude = self.exclude or ()
+        for field in self.model._meta.concrete_fields:
+            if not (isinstance(field, RelatedField)
+                    or isinstance(field, models.FileField)
+                    or field.name.startswith('_')
+                    or field.attname in exclude):
+                fields.append(field)
+        return fields
+
+    def get_all_relations(self, obj):
+        if not self._access_rels:
+            return ''
+        return ''
+        # html_list = ['<select onchange="window.open(this.value, \'_self\');">', ]
+        # html_list.append('<option value="" selected="selected">------</option>')
+        # for uri, target_field, remote_field in self._access_rels:
+        #     rel_opts = remote_field.model._meta
+        #     value = getattr(obj, target_field.attname)
+        #     value = force_text(value)
+        #     # if isinstance(value, unicode):
+        #     #     value = value.encode('utf8')
+        #     params = {remote_field.name: value}
+        #     url = '%s?%s' % (uri, urlencode(params))
+        #     html_list.append('<option value="%s">%s-%s</option>' % (
+        #         url, rel_opts.verbose_name, remote_field.verbose_name))
+        # html_list.append('</select>')
+        # return ''.join(html_list)
+
+    get_all_relations.short_description = u'相关项'
+    get_all_relations.allow_tags = True
 
 
 def check_perms(*perms):

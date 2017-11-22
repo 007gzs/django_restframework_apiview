@@ -24,7 +24,7 @@ from apiview.common_view import generate_api_js
 
 urlpatterns = [
     url(r'^example.html$', TemplateView.as_view(template_name='example.html')),
-    url(r'^admin/', admin.site.urls),
+    url(r'^modeladmin/', admin.site.urls),
     url(r'^example/', include("example_app.views")),
 ]
 if settings.DEBUG:

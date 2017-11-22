@@ -3,8 +3,8 @@
 
 from __future__ import unicode_literals, division
 
-from django.contrib import admin
+from apiview import admintools
 
 
-class BaseAdmin(admin.ModelAdmin):
+class BaseAdmin(admintools.ProxyModelAdmin):
     pass
