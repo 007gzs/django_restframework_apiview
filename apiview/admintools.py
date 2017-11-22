@@ -588,21 +588,20 @@ class ProxyModelAdmin(admin.ModelAdmin):
     def get_all_relations(self, obj):
         if not self._access_rels:
             return ''
-        return ''
-        # html_list = ['<select onchange="window.open(this.value, \'_self\');">', ]
-        # html_list.append('<option value="" selected="selected">------</option>')
-        # for uri, target_field, remote_field in self._access_rels:
-        #     rel_opts = remote_field.model._meta
-        #     value = getattr(obj, target_field.attname)
-        #     value = force_text(value)
-        #     # if isinstance(value, unicode):
-        #     #     value = value.encode('utf8')
-        #     params = {remote_field.name: value}
-        #     url = '%s?%s' % (uri, urlencode(params))
-        #     html_list.append('<option value="%s">%s-%s</option>' % (
-        #         url, rel_opts.verbose_name, remote_field.verbose_name))
-        # html_list.append('</select>')
-        # return ''.join(html_list)
+        html_list = ['<select onchange="window.open(this.value, \'_self\');">', ]
+        html_list.append('<option value="" selected="selected">------</option>')
+        for uri, target_field, remote_field in self._access_rels:
+            rel_opts = remote_field.model._meta
+            value = getattr(obj, target_field.attname)
+            value = force_text(value)
+            # if isinstance(value, unicode):
+            #     value = value.encode('utf8')
+            params = {remote_field.name: value}
+            url = '%s?%s' % (uri, urlencode(params))
+            html_list.append('<option value="%s">%s-%s</option>' % (
+                url, rel_opts.verbose_name, remote_field.verbose_name))
+        html_list.append('</select>')
+        return ''.join(html_list)
 
     get_all_relations.short_description = u'相关项'
     get_all_relations.allow_tags = True
