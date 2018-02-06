@@ -10,7 +10,6 @@ from django.db import models
 from django.db.models.manager import EmptyManager
 from django.contrib.auth.models import Group, Permission
 from django.utils.functional import cached_property
-from django_extensions.db.fields import CreationDateTimeField, ModificationDateTimeField
 
 
 class ModelChangeMixin(object):
@@ -95,10 +94,6 @@ class ModelFieldChangeMixin(ModelChangeMixin):
 
 
 class BaseModel(models.Model, ModelFieldChangeMixin):
-    created = CreationDateTimeField('创建时间', db_index=True, editable=False)
-    modified = ModificationDateTimeField('修改时间', db_index=True, editable=False)
-    is_delete = models.BooleanField('删除', default=False, null=False, db_index=True)
-    remark = models.CharField('备注', max_length=500, null=True, blank=True)
 
     class Meta:
         abstract = True
@@ -110,6 +105,9 @@ class BaseModel(models.Model, ModelFieldChangeMixin):
 
     def __unicode__(self):
         return u'%s%s(%d)' % (self.__class__.__name__, self._meta.verbose_name, self.pk)
+
+    def __str__(self):
+        return self.__unicode__()
 
     def save(self, force_insert=False, force_update=False, using=None,
              update_fields=None):
@@ -126,12 +124,6 @@ class BaseModel(models.Model, ModelFieldChangeMixin):
 
             for f in update_fields:
                 if f not in fd: update_fields.remove(f)
-
-            if 'modified' not in update_fields:
-                update_fields.append('modified')
-        elif self.pk is not None and self.created is None:
-            # compatible for django 1.8+
-            self.created = datetime.datetime.now()
         try:
             super(BaseModel, self).save(force_insert=force_insert, force_update=force_update, using=using, update_fields=update_fields)
         except DatabaseError as exp:
