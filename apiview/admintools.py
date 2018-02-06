@@ -276,6 +276,7 @@ class ProxyModelAdmin(admin.ModelAdmin):
     # extend field exclude RelatedField and PrimaryKey fields into list_display
     extend_normal_fields = False
     exclude_list_display = []
+    heads = []
     tails = []
     # extend LimitQuerySet
     limits = 100
@@ -552,23 +553,31 @@ class ProxyModelAdmin(admin.ModelAdmin):
             return list_display
 
         field_names = []
+        heads = []
+        middles = []
         tails = []
         while list_display:
             name = list_display.pop(0)
             if name in self.tails:
                 tails.append(name)
+            elif name in self.heads:
+                heads.append(name)
             else:
-                field_names.append(name)
+                middles.append(name)
 
         for field in self.get_normal_fields():
-            if field.name not in field_names:
-                if field.name in self.exclude_list_display:
-                    pass
-                elif field.name in self.tails:
-                    tails.append(field.name)
-                else:
-                    field_names.append(field.name)
-
+            if field.name in heads or field.name in middles or field.name in tails:
+                continue
+            if field.name in self.exclude_list_display:
+                pass
+            elif field.name in self.tails:
+                tails.append(field.name)
+            elif field.name in self.heads:
+                heads.append(field.name)
+            else:
+                middles.append(field.name)
+        field_names.extend(heads)
+        field_names.extend(middles)
         field_names.extend(tails)
         if self._access_rels:
             field_names.append('get_all_relations')
