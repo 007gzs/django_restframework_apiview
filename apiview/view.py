@@ -6,6 +6,7 @@ from __future__ import absolute_import, unicode_literals
 import logging
 
 from django.conf import settings
+from django.utils.encoding import force_text
 from rest_framework.response import Response
 
 from . import utility
@@ -66,7 +67,7 @@ class APIView(ViewBase):
                 context['errors'] = exc.error_dict_obj
                 context['desc'] = exc.error_dict_obj.as_text()
             else:
-                context['desc'] = unicode(exc)
+                context['desc'] = force_text(exc)
         return Response(context)
 
     def handle_exception(self, exc):

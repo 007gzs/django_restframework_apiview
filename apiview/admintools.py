@@ -707,8 +707,6 @@ class ProxyModelAdmin(admin.ModelAdmin):
             rel_opts = remote_field.model._meta
             value = getattr(obj, target_field.attname)
             value = force_text(value)
-            # if isinstance(value, unicode):
-            #     value = value.encode('utf8')
             params = {remote_field.name: value}
             url = '%s?%s' % (uri, urlencode(params))
             html_list.append('<option value="%s">%s-%s</option>' % (
@@ -864,7 +862,7 @@ class HumanizedModelResource(BaseModelResource):
                                                   )())
             elif isinstance(django_field, RelatedField):
                 setattr(cls, localize_method,
-                        lambda self, obj: unicode(getattr(obj, django_field.name)))
+                        lambda self, obj: force_text(getattr(obj, django_field.name)))
         return field
 
 

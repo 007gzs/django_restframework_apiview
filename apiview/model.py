@@ -104,7 +104,7 @@ class BaseModel(models.Model, ModelFieldChangeMixin):
         return ['pk__exact']
 
     def __unicode__(self):
-        return u'%s%s(%d)' % (self.__class__.__name__, self._meta.verbose_name, self.pk)
+        return '%s%s(%d)' % (self.__class__.__name__, self._meta.verbose_name, self.pk)
 
     def __str__(self):
         return self.__unicode__()
