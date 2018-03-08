@@ -1,5 +1,9 @@
 #! /usr/bin/env python
 # encoding: utf-8
+
+import ssl
+ssl._create_default_https_context = ssl._create_unverified_context
+
 """A setuptools based setup module.
 
 See:
