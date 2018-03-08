@@ -261,6 +261,108 @@ def get_related_model_fields(model, rel):
     return rel.get_related_field(), rel.field
 
 
+class StrictModelFormSet(BaseModelFormSet):
+    '''Add validation to ensure POST data is up to date
+    '''
+    def _existing_object(self, pk):
+        if not hasattr(self, '_object_dict'):
+            queryset = self.get_queryset()
+            if self.data:   # 提交数据时
+                pk_field = self.model._meta.pk
+                pks = []
+                for i in xrange(self.total_form_count()):
+                    prefix = self.add_prefix(i)
+                    pk_val = self.data.get('%s-%s' % (prefix, pk_field.name))
+                    if pk_val is not None:
+                        pks.append(pk_val)
+                queryset = queryset.filter(pk__in=pk_val)
+            self._object_dict = {o.pk: o for o in queryset}
+        obj = self._object_dict.get(pk)
+        if obj is None:
+            obj = self.get_queryset().filter(pk=pk).first()
+            self._object_dict[pk] = obj
+        return obj
+
+    def clean(self):
+        super(StrictModelFormSet, self).clean()
+        self.validate_queryset()
+
+    def validate_queryset(self):
+        pk = self.model._meta.pk
+        to_python = pk.to_python
+        rel = pk.rel
+        while rel:
+            related_field = rel.get_related_field()
+            to_python = related_field.to_python
+            rel = related_field.rel
+
+        updated = False
+        for form in self.forms:
+            pk_data = form[pk.name].data
+            if (pk_data not in EMPTY_VALUES
+                    and form.instance.pk != to_python(pk_data)):
+                updated = True
+                break
+        if updated:
+            new_formset = self.__class__(
+                prefix=self.prefix,
+                queryset=self.queryset,
+            )
+            self.forms = new_formset.forms
+            raise ValidationError(u'页面数据已经更新，请修改后重新保存')
+
+class StrictInlineFormSet(BaseInlineFormSet):
+    '''Add validation to ensure POST data is up to date
+    '''
+    def _existing_object(self, pk):
+        if not hasattr(self, '_object_dict'):
+            queryset = self.get_queryset()
+            if self.data:   # 提交数据时
+                pk_field = self.model._meta.pk
+                pks = []
+                for i in xrange(self.total_form_count()):
+                    prefix = self.add_prefix(i)
+                    pk_val = self.data.get('%s-%s' % (prefix, pk_field.name))
+                    if pk_val is not None:
+                        pks.append(pk_val)
+                queryset = queryset.filter(pk__in=pk_val)
+            self._object_dict = {o.pk: o for o in queryset}
+        obj = self._object_dict.get(pk)
+        if obj is None:
+            obj = self.get_queryset().filter(pk=pk).first()
+            self._object_dict[pk] = obj
+        return obj
+
+    def clean(self):
+        super(StrictInlineFormSet, self).clean()
+        self.validate_queryset()
+
+    def validate_queryset(self):
+        pk = self.model._meta.pk
+        to_python = pk.to_python
+        rel = pk.rel
+        while rel:
+            related_field = rel.get_related_field()
+            to_python = related_field.to_python
+            rel = related_field.rel
+
+        updated = False
+        for form in self.forms:
+            pk_data = form[pk.name].data
+            if (pk_data not in EMPTY_VALUES
+                    and form.instance.pk != to_python(pk_data)):
+                updated = True
+                break
+        if updated:
+            new_formset = self.__class__(
+                save_as_new=self.save_as_new,
+                prefix=self.prefix,
+                queryset=self.queryset,
+            )
+            self.forms = new_formset.forms
+            raise ValidationError(u'页面数据已经更新，请修改后重新保存')
+
+
 # 所有proxy中ModelAdmin的基类
 class ProxyModelAdmin(admin.ModelAdmin):
     '''default Admin class used by proxy|real models
@@ -295,6 +397,8 @@ class ProxyModelAdmin(admin.ModelAdmin):
     cache_serial = set()
 
     actions = ['_reset']
+    
+    formset = StrictModelFormSet
 
     def _reset(self, request, querset):
         pass
