@@ -20,7 +20,7 @@ from django.db import models, DEFAULT_DB_ALIAS, DJANGO_VERSION_PICKLE_KEY
 from django.db.models.constants import LOOKUP_SEP
 from django.db.models.fields.related import RelatedField
 from django.db.models.query import QuerySet
-from django.forms.models import modelform_factory
+from django.forms.models import modelform_factory, BaseModelFormSet, BaseInlineFormSet
 from django.http import HttpResponseRedirect, Http404
 from django.shortcuts import get_object_or_404
 from django.template.response import TemplateResponse
@@ -397,7 +397,7 @@ class ProxyModelAdmin(admin.ModelAdmin):
     cache_serial = set()
 
     actions = ['_reset']
-    
+
     formset = StrictModelFormSet
 
     def _reset(self, request, querset):

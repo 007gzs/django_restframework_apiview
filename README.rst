@@ -48,7 +48,7 @@ edit myapp/views.py::
     
     #! usr/bin/env python
     # encoding: utf-8
-    from __future__ import unicode_literals, division
+    from __future__ import absolute_import, unicode_literals
 
     from django.db import IntegrityError, transaction
     from django.contrib.auth import authenticate, login
