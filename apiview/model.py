@@ -8,6 +8,7 @@ import datetime
 from django.db import DatabaseError
 from django.db import models
 from django.db.models.manager import EmptyManager
+from django.utils import six
 from django.contrib.auth.models import Group, Permission
 from django.utils.functional import cached_property
 
@@ -98,6 +99,11 @@ class BaseModel(models.Model, ModelFieldChangeMixin):
     class Meta:
         abstract = True
         ordering = ['-pk', ]
+
+    @classmethod
+    def _prepare(cls):
+        if 'edit' not in cls._meta.default_permissions:
+            cls._meta.default_permissions += ('edit',)
 
     @staticmethod
     def autocomplete_search_fields():

@@ -422,11 +422,18 @@ class ProxyModelAdmin(admin.ModelAdmin):
             klass = limit_queryset(self.limits, queryset.__class__)
             queryset = klass.from_queryset(queryset)
 
-        if not self.has_delete_permission(request):
+        if not self.has_delete_permission(request) and not self.has_change_permission(request):
             return queryset.using(self.db_for_read)
         else:
             return queryset.using(self.db_for_write)
+    def get_model_perms(self, request):
 
+        return {
+            'add': self.has_add_perm(request),
+            'edit': self.has_edit_perm(request),
+            'change': self.has_change_perm(request),
+            'delete': self.has_delete_perm(request),
+        }
     def has_delete_permission(self, request, obj=None):
         '''add inspection of changeable and editable option
         '''
@@ -439,16 +446,28 @@ class ProxyModelAdmin(admin.ModelAdmin):
         '''
         return super(ProxyModelAdmin, self).has_delete_permission(request, obj)
 
+    def has_edit_permission(self, request, obj=None):
+        opts = self.opts
+        codename = get_permission_codename('edit', opts)
+        return request.user.has_perm("%s.%s" % (opts.app_label, codename))
+
+    def has_edit_perm(self, request, obj=None):
+        '''user permission checking inside the view logic
+        '''
+        return self.has_edit_permission(request, obj)
+
     def has_change_permission(self, request, obj=None):
         '''add inspection of changeable option
         '''
+        
+        ret = False
         if obj:
-            if self.changeable:
-                return super(ProxyModelAdmin, self).has_delete_permission(request, obj)
+            if self.editable:
+                ret = self.has_change_perm(request, obj)
         else:
-            return super(ProxyModelAdmin, self).has_change_permission(request, obj)
-
-        return False
+            ret = self.has_change_perm(request, obj)
+        print("has_change_permission %s %s %s %s" % (obj, self.editable, ret, self))
+        return ret
 
     def has_change_perm(self, request, obj=None):
         '''user permission checking inside the view logic
@@ -484,18 +503,19 @@ class ProxyModelAdmin(admin.ModelAdmin):
 
         # get a blank form to fetch all fields
         form = modelform_factory(self.model, kwargs.get('form', self.form), exclude=())
-        readonly_fields = self.get_readonly_fields(request, obj)
-        readonly_fields_set = set(readonly_fields)
 
         if fields is None or fields is forms.ALL_FIELDS:
             fields = form.base_fields.keys()
+
+        readonly_fields = self.get_readonly_fields(request, obj, fields=fields)
+        readonly_fields_set = set(readonly_fields)
 
         if 'exclude' not in kwargs:
             if self.exclude is None:
                 exclude = []
             else:
                 exclude = list(self.exclude)
-            exclude.extend(self.get_readonly_fields(request, obj))
+            exclude.extend(readonly_fields)
 
             to_exclude_fields = []
             for name in fields:
@@ -590,15 +610,15 @@ class ProxyModelAdmin(admin.ModelAdmin):
 
     def get_fieldsets(self, request, obj=None):
         fieldsets = list(super(ProxyModelAdmin, self).get_fieldsets(request, obj))
-        if not self.has_delete_permission(request, obj):
+        if not self.has_change_perm(request, obj):
             list_display = self.get_list_display(request)
             valid_f_names = flatten_fieldsets(fieldsets)
             fields = [f for f in list_display if f in valid_f_names]
             return [(None, {'fields': fields})]
         return fieldsets
 
-    def get_readonly_fields(self, request, obj=None):
-        if obj and self.has_delete_permission(request, obj):
+    def get_readonly_fields(self, request, obj=None, fields=None):
+        if obj and self.has_edit_perm(request, obj):
             readonly_fields = list(super(ProxyModelAdmin, self).get_readonly_fields(request, obj))
             readonly_fields_set = set(readonly_fields)
             for field in self.change_view_readonly_fields:
@@ -620,8 +640,8 @@ class ProxyModelAdmin(admin.ModelAdmin):
                         readonly_fields_set.add(field)
                         readonly_fields.append(field)
             return readonly_fields
-        elif not self.has_delete_permission(request, obj):
-            return self.get_list_display(request)
+        elif not self.has_edit_perm(request, obj):
+            return fields if fields is not None else self.get_list_display(request)
         else:
             return list(super(ProxyModelAdmin, self).get_readonly_fields(request, obj))
 
@@ -740,11 +760,11 @@ def check_perms(*perms):
 
 
 class ImportMixin(_ImportMixin):
-    @check_perms('add', 'delete')
+    @check_perms('add', 'change')
     def import_action(self, request, *args, **kwargs):
         return _ImportMixin.import_action(self, request, *args, **kwargs)
 
-    @check_perms('add', 'delete')
+    @check_perms('add', 'change')
     def process_import(self, request, *args, **kwargs):
         return _ImportMixin.process_import(self, request, *args, **kwargs)
 
@@ -867,7 +887,7 @@ class HumanizedModelResource(BaseModelResource):
 
 
 class ExportMixin(_ExportMixin):
-    @check_perms('change')
+    @check_perms('view')
     def export_action(self, request, *args, **kwargs):
         if request.method == "POST":
             if not request.user.email:
