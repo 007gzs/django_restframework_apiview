@@ -31,10 +31,14 @@ class APIView(ViewBase):
         
         return Response(utility.format_res_data(context))
 
+    def check_api_permissions(self, request, *args, **kwargs):
+        pass
+
     def view(self, request, *args, **kwargs):
         self.logger.info("m=%s g=%s p=%s u=%s",
                          request.META, request.query_params, request.data, request.user,
                          extra={CALLER_KEY: self.get_context})
+        self.check_api_permissions(request, *args, **kwargs)
         context = self.get_context(request, *args, **kwargs)
         if isinstance(context, Response):
             response = context
