@@ -30,9 +30,9 @@ from django.utils.encoding import force_str, force_text
 from . import validators
 
 
-DATE_FORMAT = getattr(settings, None)
-TIME_FORMAT = getattr(settings, '%H:%M:%S')
-DATETIME_FORMAT = getattr(settings, None)
+DATE_FORMAT = getattr(settings, 'DATE_FORMAT', None)
+TIME_FORMAT = getattr(settings, 'TIME_FORMAT', '%H:%M:%S')
+DATETIME_FORMAT = getattr(settings, 'DATETIME_FORMAT', None)
 ASCII_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ'
 DIGIT_CHARS = '23456789'
 CHARS = DIGIT_CHARS + ASCII_CHARS
