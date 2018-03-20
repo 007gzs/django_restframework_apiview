@@ -29,10 +29,10 @@ from django.utils.encoding import force_str, force_text
 
 from . import validators
 
-DATE_FORMAT = '%Y-%m-%d'
-TIME_FORMAT = '%H:%M:%S'
-DATETIME_FORMAT = DATE_FORMAT + ' ' + TIME_FORMAT
 
+DATE_FORMAT = getattr(settings, None)
+TIME_FORMAT = getattr(settings, '%H:%M:%S')
+DATETIME_FORMAT = getattr(settings, None)
 ASCII_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ'
 DIGIT_CHARS = '23456789'
 CHARS = DIGIT_CHARS + ASCII_CHARS
@@ -358,16 +358,16 @@ def datetime2str(dtime, format):
     return dtime.strfomrt(format)
 
 
-def format_res_data(data, timestamp=False):
+def format_res_data(data):
 
     if hasattr(data, 'items'):
         for k, v in data.items():
-            data[k] = format_res_data(v, timestamp)
+            data[k] = format_res_data(v)
         return data
     elif isinstance(data, (tuple, list)):
         tmp = []
         for item in data:
-            tmp.append(format_res_data(item, timestamp))
+            tmp.append(format_res_data(item))
         return tmp
     else:
         timeformat = None
@@ -377,14 +377,14 @@ def format_res_data(data, timestamp=False):
             timeformat = DATETIME_FORMAT
         elif isinstance(data, datetime.date):
             canstamp = True
-            timeformat = DATETIME_FORMAT
+            timeformat = DATE_FORMAT
         elif isinstance(data, datetime.time):
             canstamp = False
             timeformat = TIME_FORMAT
-        if canstamp and timestamp:
-            return datetime2timestamp(data)
-        elif timeformat is not None:
+        if timeformat is not None:
             return data.strftime(timeformat)
+        elif canstamp:
+            return datetime2timestamp(data)
         else: 
             return data
 
