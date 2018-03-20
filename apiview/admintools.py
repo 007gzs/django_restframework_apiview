@@ -466,7 +466,6 @@ class ProxyModelAdmin(admin.ModelAdmin):
                 ret = self.has_change_perm(request, obj)
         else:
             ret = self.has_change_perm(request, obj)
-        print("has_change_permission %s %s %s %s" % (obj, self.editable, ret, self))
         return ret
 
     def has_change_perm(self, request, obj=None):
