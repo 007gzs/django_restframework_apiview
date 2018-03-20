@@ -24,12 +24,21 @@ class APIView(ViewBase):
             return self.name
         return super(APIView, self).get_view_name()
 
+    def format_res_data(self, context):
+        if isinstance(context, dict):
+            if 'code' not in context:
+                context = self.get_default_context(data=context)
+        if isinstance(context, Response):
+            return context
+        
+        return Response(utility.format_res_data(context))
+
     def view(self, request, *args, **kwargs):
         self.logger.info("m=%s g=%s p=%s u=%s",
                          request.META, request.query_params, request.data, request.user,
                          extra={CALLER_KEY: self.get_context})
-        context = utility.format_res_data(self.get_context(request, *args, **kwargs))
-        return Response(context)
+        context = self.format_res_data(self.get_context(request, *args, **kwargs))
+        return context
 
     def get(self, request, *args, **kwargs):
         return self.view(request, *args, **kwargs)
@@ -68,16 +77,16 @@ class APIView(ViewBase):
                 context['desc'] = exc.error_dict_obj.as_text()
             else:
                 context['desc'] = force_text(exc)
-        return Response(context)
+        return self.format_res_data(context)
 
     def handle_exception(self, exc):
         if isinstance(exc, CustomError):
-            return Response(exc.get_res_dict())
+            return self.format_res_data(exc.get_res_dict())
 
         if settings.DEBUG:
             raise
 
         utility.reportExceptionByMail("500")
-        return Response(ErrCode.ERR_SYS_ERROR.get_res_dict())
+        return self.format_res_data(ErrCode.ERR_SYS_ERROR.get_res_dict())
 
 
