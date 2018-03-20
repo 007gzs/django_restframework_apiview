@@ -381,7 +381,7 @@ def format_res_data(data, timestamp=False):
         elif isinstance(data, datetime.time):
             canstamp = False
             timeformat = TIME_FORMAT
-        if canstamp:
+        if canstamp and timeformat:
             return datetime2timestamp(data)
         elif timeformat is not None:
             return data.strftime(timeformat)
