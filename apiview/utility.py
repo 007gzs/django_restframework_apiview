@@ -362,12 +362,12 @@ def format_res_data(data, timestamp=False):
 
     if hasattr(data, 'items'):
         for k, v in data.items():
-            data[k] = format_res_data(v)
+            data[k] = format_res_data(v, timestamp)
         return data
     elif isinstance(data, (tuple, list)):
         tmp = []
         for item in data:
-            tmp.append(format_res_data(item))
+            tmp.append(format_res_data(item, timestamp))
         return tmp
     else:
         timeformat = None
@@ -381,7 +381,7 @@ def format_res_data(data, timestamp=False):
         elif isinstance(data, datetime.time):
             canstamp = False
             timeformat = TIME_FORMAT
-        if canstamp and timeformat:
+        if canstamp and timestamp:
             return datetime2timestamp(data)
         elif timeformat is not None:
             return data.strftime(timeformat)
