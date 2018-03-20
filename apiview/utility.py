@@ -360,7 +360,7 @@ def datetime2str(dtime, format):
 
 def format_res_data(data, timestamp=False):
 
-    elif hasattr(data, 'items'):
+    if hasattr(data, 'items'):
         for k, v in data.items():
             data[k] = format_res_data(v)
         return data
@@ -385,8 +385,8 @@ def format_res_data(data, timestamp=False):
             return datetime2timestamp(data)
         elif timeformat is not None:
             return data.strftime(timeformat)
-            
-        return data
+        else: 
+            return data
 
 
 #把字典内容赋值给对象属性
