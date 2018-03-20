@@ -28,8 +28,6 @@ class APIView(ViewBase):
         if isinstance(context, dict):
             if 'code' not in context:
                 context = self.get_default_context(data=context)
-        if isinstance(context, Response):
-            return context
         
         return Response(utility.format_res_data(context))
 
@@ -37,8 +35,12 @@ class APIView(ViewBase):
         self.logger.info("m=%s g=%s p=%s u=%s",
                          request.META, request.query_params, request.data, request.user,
                          extra={CALLER_KEY: self.get_context})
-        context = self.format_res_data(self.get_context(request, *args, **kwargs))
-        return context
+        context = self.get_context(request, *args, **kwargs)
+        if isinstance(context, Response):
+            response = context
+        else:
+            response = self.format_res_data(context)
+        return response
 
     def get(self, request, *args, **kwargs):
         return self.view(request, *args, **kwargs)
