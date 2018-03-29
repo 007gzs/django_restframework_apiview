@@ -105,9 +105,37 @@ class BaseModel(models.Model, ModelFieldChangeMixin):
         if 'edit' not in cls._meta.default_permissions:
             cls._meta.default_permissions += ('edit',)
 
-    @staticmethod
+    @classmethod
     def autocomplete_search_fields():
-        return ['pk__exact']
+        if hasattr(cls, '_autocomplete_search_fields'):
+            return cls._autocomplete_search_fields
+        # Apply keyword searches.
+        def construct_search(field_name):
+            if field_name.startswith('^'):
+                return "%s__istartswith" % field_name[1:]
+            elif field_name.startswith('='):
+                return "%s__iexact" % field_name[1:]
+            elif field_name.startswith('@'):
+                return "%s__search" % field_name[1:]
+            else:
+                return "%s__icontains" % field_name
+        return [construct_search(str(search_field)) for search_field in cls.search_fields()]
+
+    @classmethod
+    def search_fields(cls):
+        if hasattr(cls, '_search_fields'):
+            return cls._search_fields 
+        ret = set()
+        for field in cls._meta.fields:
+            if not field.db_index and not field.unique:
+                continue
+            if isinstance(field, models.ForeignKey) or isinstance(field, models.ManyToManyField):
+                continue
+            if isinstance(field, models.CharField):
+                ret.add('^%s' % field.name)
+            elif isinstance(field, models.IntegerField):
+                ret.add('=%s' % field.name)
+        return ret
 
     def __unicode__(self):
         return '%s%s(%d)' % (self.__class__.__name__, self._meta.verbose_name, self.pk)
