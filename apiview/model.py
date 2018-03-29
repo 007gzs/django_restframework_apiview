@@ -106,7 +106,7 @@ class BaseModel(models.Model, ModelFieldChangeMixin):
             cls._meta.default_permissions += ('edit',)
 
     @classmethod
-    def autocomplete_search_fields():
+    def autocomplete_search_fields(cls):
         if hasattr(cls, '_autocomplete_search_fields'):
             return cls._autocomplete_search_fields
         # Apply keyword searches.
