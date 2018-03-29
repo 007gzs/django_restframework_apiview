@@ -731,8 +731,8 @@ class ProxyModelAdmin(admin.ModelAdmin):
 
     def _get_image_field_render(self, field):
         def image_tag():
-            return mark_safe('<img src="%s" width="150" height="150" />' % (getattr(self, field.name)))
-        image_tag.short_description = field.
+            return mark_safe('<img src="%s" style="max-width: 500px; max-height:300px" />' % (getattr(self, field.name)))
+        image_tag.short_description = field.verbose_name
         return image_tag
 
     def get_normal_fields(self):
