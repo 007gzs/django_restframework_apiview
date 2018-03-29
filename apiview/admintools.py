@@ -424,7 +424,7 @@ class ProxyModelAdmin(admin.ModelAdmin):
             request = kwargs.pop("request", None)
             kwargs['widget'] = AdminImageWidget
             return db_field.formfield(**kwargs)
-        return super(BaseAdmin, self).formfield_for_dbfield(db_field, **kwargs)
+        return super(ProxyModelAdmin, self).formfield_for_dbfield(db_field, **kwargs)
 
     def get_editable_fields(self, request, obj=None):
         if self.editable_fields == forms.ALL_FIELDS:
@@ -730,8 +730,8 @@ class ProxyModelAdmin(admin.ModelAdmin):
         return field_names
 
     def _get_image_field_render(self, field):
-        def image_tag():
-            return mark_safe('<img src="%s" style="max-width: 500px; max-height:300px" />' % (getattr(self, field.name)))
+        def image_tag(obj):
+            return mark_safe('<img src="%s" style="max-width: 500px; max-height:300px" />' % (getattr(obj, field.name)))
         image_tag.short_description = field.verbose_name
         return image_tag
 
@@ -743,10 +743,12 @@ class ProxyModelAdmin(admin.ModelAdmin):
                     or field.name.startswith('_')
                     or field.attname in exclude):
                 if isinstance(field, models.ImageField):
-                    field_name = '_%s__image_show' % field.name
+                    field_name = '_apiview__%s__image_show' % field.name
                     if not hasattr(self, field_name):
-                        self[field_name] = self._get_image_field_render(field)
-                    fields.append({'name':field_name})
+                        setattr(self, field_name, self._get_image_field_render(field))
+                    field = field.clone()
+                    field.name = field_name
+                    fields.append(field)
                 elif not isinstance(field, models.FileField):
                     fields.append(field)
         return fields
