@@ -13,12 +13,14 @@ from django.contrib import admin
 from django.contrib import messages
 from django.contrib.admin.utils import flatten_fieldsets, unquote
 from django.contrib.admin.views import main
+from django.contrib.admin.widgets import AdminFileWidget
 from django.contrib.auth import get_permission_codename
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import PermissionDenied
 from django.db import models, DEFAULT_DB_ALIAS, DJANGO_VERSION_PICKLE_KEY
 from django.db.models.constants import LOOKUP_SEP
 from django.db.models.fields.related import RelatedField
+from django.utils.safestring import mark_safe
 from django.db.models.query import QuerySet
 from django.forms.models import modelform_factory, BaseModelFormSet, BaseInlineFormSet
 from django.http import HttpResponseRedirect, Http404
@@ -363,6 +365,18 @@ class StrictInlineFormSet(BaseInlineFormSet):
             raise ValidationError(u'页面数据已经更新，请修改后重新保存')
 
 
+class AdminImageWidget(AdminFileWidget):
+    def render(self, name, value, attrs=None, renderer=None):
+        output = []
+        if value and getattr(value, "url", None):
+            image_url = value.url
+            file_name = str(value)
+            output.append(' <a href="%s" target="_blank"><img src="%s" alt="%s" /></a>' %
+                          (image_url, image_url, file_name))
+        output.append(super(AdminFileWidget, self).render(name, value, attrs, renderer))
+        return mark_safe(''.join(output))
+
+
 # 所有proxy中ModelAdmin的基类
 class ProxyModelAdmin(admin.ModelAdmin):
     '''default Admin class used by proxy|real models
@@ -405,6 +419,13 @@ class ProxyModelAdmin(admin.ModelAdmin):
 
     _reset.short_description = '清空选项'
 
+    def formfield_for_dbfield(self, db_field, **kwargs):
+        if isinstance(db_field, models.ImageField):
+            request = kwargs.pop("request", None)
+            kwargs['widget'] = AdminImageWidget
+            return db_field.formfield(**kwargs)
+        return super(BaseAdmin, self).formfield_for_dbfield(db_field, **kwargs)
+
     def get_editable_fields(self, request, obj=None):
         if self.editable_fields == forms.ALL_FIELDS:
             return None
@@ -422,10 +443,11 @@ class ProxyModelAdmin(admin.ModelAdmin):
             klass = limit_queryset(self.limits, queryset.__class__)
             queryset = klass.from_queryset(queryset)
 
-        if not self.has_delete_permission(request) and not self.has_change_permission(request):
+        if not self.has_delete_permission(request) and not self.has_edit_permission(request):
             return queryset.using(self.db_for_read)
         else:
             return queryset.using(self.db_for_write)
+
     def get_model_perms(self, request):
 
         return {
@@ -434,6 +456,7 @@ class ProxyModelAdmin(admin.ModelAdmin):
             'change': self.has_change_perm(request),
             'delete': self.has_delete_perm(request),
         }
+
     def has_delete_permission(self, request, obj=None):
         '''add inspection of changeable and editable option
         '''
@@ -706,15 +729,26 @@ class ProxyModelAdmin(admin.ModelAdmin):
             field_names.append('get_all_relations')
         return field_names
 
+    def _get_image_field_render(self, field):
+        def image_tag():
+            return mark_safe('<img src="%s" width="150" height="150" />' % (getattr(self, field.name)))
+        image_tag.short_description = field.
+        return image_tag
+
     def get_normal_fields(self):
         fields = []
         exclude = self.exclude or ()
         for field in self.model._meta.concrete_fields:
             if not (isinstance(field, RelatedField)
-                    or isinstance(field, models.FileField)
                     or field.name.startswith('_')
                     or field.attname in exclude):
-                fields.append(field)
+                if isinstance(field, models.ImageField):
+                    field_name = '_%s__image_show' % field.name
+                    if not hasattr(self, field_name):
+                        self[field_name] = self._get_image_field_render(field)
+                    fields.append({'name':field_name})
+                elif not isinstance(field, models.FileField):
+                    fields.append(field)
         return fields
 
     def get_all_relations(self, obj):
