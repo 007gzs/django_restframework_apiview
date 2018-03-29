@@ -13,6 +13,18 @@ from django.contrib.auth.models import Group, Permission
 from django.utils.functional import cached_property
 
 
+class AdminImageWidget(AdminFileWidget):
+    def render(self, name, value, attrs=None, renderer=None):
+        output = []
+        if value and getattr(value, "url", None):
+            image_url = value.url
+            file_name = str(value)
+            output.append(' <a href="%s" target="_blank"><img src="%s" alt="%s" /></a>' %
+                          (image_url, image_url, file_name))
+        output.append(super(AdminFileWidget, self).render(name, value, attrs, renderer))
+        return mark_safe(''.join(output))
+
+
 class ModelChangeMixin(object):
     '''Monitor the changed attributes'''
 
@@ -165,6 +177,13 @@ class BaseModel(models.Model, ModelFieldChangeMixin):
                 pass
             else:
                 raise
+
+    def formfield_for_dbfield(self, db_field, **kwargs):
+        if isinstance(db_field, models.ImageField):
+            request = kwargs.pop("request", None)
+            kwargs['widget'] = AdminImageWidget
+            return db_field.formfield(**kwargs)
+        return super(BaseAdmin, self).formfield_for_dbfield(db_field, **kwargs)
 
 
 class AbstractUserMixin(object):
