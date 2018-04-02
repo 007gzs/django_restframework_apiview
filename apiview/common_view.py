@@ -100,6 +100,7 @@ def get_view_list(urlpattern=None, head='/'):
         and issubclass(urlpattern.callback.view_class, APIView):
         retdict = dict()
         viewclass = urlpattern.callback.view_class
+        retdict['viewclass'] = viewclass
         retdict['params'] = viewclass._meta.param_fields
         retdict['name'] = getattr(viewclass, 'name', viewclass.__name__)
         retdict['url'] = head.replace('//', '/').rstrip('/')
