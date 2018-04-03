@@ -25,7 +25,7 @@ class APIView(ViewBase):
         return super(APIView, self).get_view_name()
 
     def format_res_data(self, context):
-        if not isinstance(context, dict) or if 'code' not in context:
+        if not isinstance(context, dict) or 'code' not in context:
             context = self.get_default_context(data=context)
         
         return Response(utility.format_res_data(context))
