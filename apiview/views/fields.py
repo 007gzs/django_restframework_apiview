@@ -24,10 +24,11 @@ from django.utils.translation import ugettext_lazy as _
 from django.utils.encoding import force_text
 from apiview import utility
 # to prevent Importation-Examination
-from django.forms.fields import *
+from django.forms.fields import *  # NOQA
 
 from apiview import validators
 from .widgets import BooleanInput, NullBooleanSelect
+
 
 class _Empty(object):
     def __nonzero__(self):
@@ -36,7 +37,9 @@ class _Empty(object):
     def __str__(self):
         return '<empty>'
 
+
 empty = _Empty()
+
 
 def formfield(field, **kwargs):
     kwargs.setdefault('validators', field.validators)
@@ -44,20 +47,17 @@ def formfield(field, **kwargs):
             models.AutoField,
             models.PositiveIntegerField,
             models.PositiveSmallIntegerField)):
-        return IntegerField(min_value=0, **kwargs)
+        return fields.IntegerField(min_value=0, **kwargs)
     else:
-        return globals().get(field.get_internal_type(), CharField)(**kwargs)
+        return globals().get(field.get_internal_type(), fields.CharField)(**kwargs)
 
-def field_for_model(
-        model, field,
-        widget=None, localize=None,
-        help_text=None, error_messages=None):
-    return fields_for_model(
-            model, [field], None,
-            widget and {field: widget}, formfield, 
-            localize is not None and {field: localize} or localize, None,
-            help_text and {field: help_text},
-            error_messages and {field: error_messages})[field]
+
+def field_for_model(model, field, widget=None, localize=None, help_text=None, error_messages=None):
+    return fields_for_model(model, [field], None, widget and {field: widget}, formfield,
+                            localize is not None and {field: localize} or localize, None,
+                            help_text and {field: help_text},
+                            error_messages and {field: error_messages})[field]
+
 
 def field_info(field):
 
@@ -74,7 +74,7 @@ def field_info(field):
     if hasattr(field, 'fields'):
         h_text = []
         for f in field.fields:
-            if isinstance(f, Field):
+            if isinstance(f, fields.Field):
                 h_text.append("%s" % f.__class__.__name__)
             elif type(f) == type:
                 h_text.append("%s" % f.__name__)
@@ -82,7 +82,7 @@ def field_info(field):
                 h_text.append('%s' % f)
         help_text_li.append("fields : (%s)" % ",".join(h_text))
     if hasattr(field, 'field'):
-        if isinstance(field.field, Field):
+        if isinstance(field.field, fields.Field):
             help_text_li.append("field : %s" % field.field.__class__.__name__)
         elif type(field.field) == type:
             help_text_li.append('field : %s' % field.field.__name__)
@@ -94,6 +94,7 @@ def field_info(field):
 def _wrap_field(fieldclass, methods=()):
     '''rewrite the __init__, to_python and clean methods to add more features'''
     init_method = fieldclass.__init__
+
     @wraps(init_method)
     def __init__(self, *args, **kwargs):
         self.type_name = kwargs.pop('type_name', type(self).__name__)
@@ -107,6 +108,7 @@ def _wrap_field(fieldclass, methods=()):
         self.field_info = field_info(self)
 
     to_python_method = fieldclass.to_python
+
     @wraps(to_python_method)
     def to_python(self, value):
         if (value in self.empty_values
@@ -120,6 +122,7 @@ def _wrap_field(fieldclass, methods=()):
         return value
 
     clean_method = fieldclass.clean
+
     @wraps(clean_method)
     def clean(self, *args, **kwargs):
         try:
@@ -146,9 +149,11 @@ def _wrap_field(fieldclass, methods=()):
 
     return type(fieldclass)(fieldclass.__name__, (fieldclass, ), attrs)
 
+
 def wrap_field(methods=()):
     '''make _wrap_field as a decorator'''
     return partial(_wrap_field, methods=methods)
+
 
 for _fieldclass_name in fields.__all__[1:]:
     six.exec_('{0} = _wrap_field(fields.{0})'.format(_fieldclass_name))
@@ -156,7 +161,7 @@ for _fieldclass_name in fields.__all__[1:]:
 
 # overwrite BooleanField and NullBooleanField to accept 0,1
 @wrap_field(methods=('to_python', ))
-class BooleanField(BooleanField):
+class BooleanField(fields.BooleanField):
     widget = BooleanInput
 
     default_error_messages = {
@@ -179,27 +184,30 @@ class BooleanField(BooleanField):
             raise ValidationError(self.error_messages['invalid'], code='invalid')
 
 
-class NullBooleanField(NullBooleanField):
+class NullBooleanField(fields.NullBooleanField):
     widget = NullBooleanSelect
 
-class MobileField(CharField):
+
+class MobileField(fields.CharField):
     default_validators = [validators.mobile]
 
-class LongitudeField(FloatField):
-    def __init__(self, max_value=180.0, min_value=-180.0, *args, **kwargs):
-        super(LongitudeField, self).__init__(
-            max_value, min_value, *args, **kwargs)
 
-class LatitudeField(FloatField):
+class LongitudeField(fields.FloatField):
+    def __init__(self, max_value=180.0, min_value=-180.0, *args, **kwargs):
+        super(LongitudeField, self).__init__(max_value, min_value, *args, **kwargs)
+
+
+class LatitudeField(fields.FloatField):
     def __init__(self, max_value=90.0, min_value=-90.0, *args, **kwargs):
         super(LatitudeField, self).__init__(
             max_value, min_value, *args, **kwargs)
 
-class SplitCharField(CharField):
+
+class SplitCharField(fields.CharField):
     """Split string value with given sep or seps
     """
 
-    default_field = CharField()
+    default_field = fields.CharField()
 
     def __init__(self, *args, **kwargs):
         self.sep = kwargs.pop('sep', ',')
@@ -213,21 +221,23 @@ class SplitCharField(CharField):
         else:
             return []
 
-class TimestampField(IntegerField):
+
+class TimestampField(fields.IntegerField):
     def to_python(self, value):
         v = super(TimestampField, self).to_python(value)
         if v is None:
             return None
         return utility.timestamp2datetime(v)
 
-class PairCharField(CharField):
+
+class PairCharField(fields.CharField):
     """Split string value with given seps"""
     default_error_messages = {
         'invalid': _('Enter a valid value.'),
         'unpaired': _('Enter a valid value.'),
     }
 
-    default_field = (CharField(), CharField())
+    default_field = (fields.CharField(), fields.CharField())
 
     def __init__(self, *args, **kwargs):
         self.seps = kwargs.pop('seps', ('|', '.'))
@@ -248,7 +258,7 @@ class PairCharField(CharField):
 
     def gen_split(self, value, idx=0):
         if not value:
-            return 
+            return
         if idx == len(self.seps) - 1:
             pair = value.split(self.seps[idx])
             if len(pair) != 2:

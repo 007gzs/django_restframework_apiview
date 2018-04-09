@@ -2,8 +2,10 @@
 # encoding: utf-8
 from __future__ import unicode_literals
 
+
 class DTDError(Exception):
     """Base Error of this Module"""
+
 
 class DTDSchemaError(DTDError):
     """Raise when translating data to DTD failed"""
@@ -12,6 +14,7 @@ class DTDSchemaError(DTDError):
         self.instance = instance
         self.path = path
         self.cause = cause
+
 
 class DTDProcessError(DTDError):
     """Raise when processing data or schema failed"""
@@ -30,8 +33,10 @@ class DTDProcessError(DTDError):
     def __unicode__(self):
         return self.message
 
+
 class DTDValidationError(DTDProcessError):
     """Raise when validating data failed"""
+
 
 class DTDFlexError(DTDProcessError):
     """Raise when flexing schema failed"""

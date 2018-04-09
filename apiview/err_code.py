@@ -4,7 +4,6 @@
 from __future__ import absolute_import, unicode_literals
 
 from django.conf import settings
-from django.test.signals import setting_changed
 
 from .code import Code
 
@@ -19,5 +18,5 @@ CodeDefine = (
     ('ERR_COMMON_BAD_FORMAT',       -12,    '格式错误'),
     ('ERR_COMMON_PERMISSION',       -13,    '权限错误'),
 )
- 
+
 ErrCode = Code(CodeDefine + getattr(settings, "ERROR_CODE_DEFINE", ()))

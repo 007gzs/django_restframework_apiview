@@ -42,7 +42,7 @@ class ApiViewConsumer(JsonWebsocketConsumer):
         if not hasattr(callback, 'view_class') or not issubclass(callback.view_class, APIView):
             raise Resolver404
         request.resolver_match = resolver_match
-        response = callback(request, is_ws=True, ws_data=data, ws_user=user, 
+        response = callback(request, is_ws=True, ws_data=data, ws_user=user,
                             ws_reply_channel=reply_channel, *callback_args, **callback_kwargs)
         return response
 
@@ -59,12 +59,13 @@ class ApiViewConsumer(JsonWebsocketConsumer):
         data = content.get("data", None)
         res = dict()
         try:
-            response = self.get_response(self.request, path, data, getattr(self.message, "user", None), self.message.reply_channel)
+            response = self.get_response(self.request, path, data,
+                                         getattr(self.message, "user", None), self.message.reply_channel)
             res['data'] = response.data
             res['status_code'] = response.status_code
-        except Resolver404:
+        except Resolver404 as e:
             res['status_code'] = 404
-        except:
+        except Exception as e:
             res['status_code'] = 500
         res['reqid'] = reqid
         self.send(res)

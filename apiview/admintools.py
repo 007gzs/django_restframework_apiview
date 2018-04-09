@@ -16,7 +16,8 @@ from django.contrib.admin.views import main
 from django.contrib.admin.widgets import AdminFileWidget
 from django.contrib.auth import get_permission_codename
 from django.contrib.contenttypes.models import ContentType
-from django.core.exceptions import PermissionDenied
+from django.core.exceptions import PermissionDenied, ValidationError
+from django.core.validators import EMPTY_VALUES
 from django.db import models, DEFAULT_DB_ALIAS, DJANGO_VERSION_PICKLE_KEY
 from django.db.models.constants import LOOKUP_SEP
 from django.db.models.fields.related import RelatedField
@@ -206,7 +207,7 @@ def format_field(verbose, field, options=None, **kwargs):
 def collapse_fields(verbose, fields, options=None, **kwargs):
     '''
     Collapse_fields into one field in changelist_view in modeladmin site
-    
+
     Example:
         class MyAdminClass(models.ModelAdmin):
             list_display = [collapse_fields(
@@ -230,8 +231,7 @@ def collapse_fields(verbose, fields, options=None, **kwargs):
         html = []
         for name in fields:
             field, label, value = _lookup_field(name, obj)
-            widgetclass = widget_map[name].get('widgetclass', None) \
-                          or get_fieldwidget(field)
+            widgetclass = widget_map[name].get('widgetclass', None) or get_fieldwidget(field)
             widget = widgetclass(widget_map[name].get('attrs', {}))
             html.append(widget.render(name, (label, value), None))
         return ''.join(html)
@@ -272,7 +272,7 @@ class StrictModelFormSet(BaseModelFormSet):
             if self.data:   # 提交数据时
                 pk_field = self.model._meta.pk
                 pks = []
-                for i in xrange(self.total_form_count()):
+                for i in range(self.total_form_count()):
                     prefix = self.add_prefix(i)
                     pk_val = self.data.get('%s-%s' % (prefix, pk_field.name))
                     if pk_val is not None:
@@ -313,6 +313,7 @@ class StrictModelFormSet(BaseModelFormSet):
             self.forms = new_formset.forms
             raise ValidationError(u'页面数据已经更新，请修改后重新保存')
 
+
 class StrictInlineFormSet(BaseInlineFormSet):
     '''Add validation to ensure POST data is up to date
     '''
@@ -322,7 +323,7 @@ class StrictInlineFormSet(BaseInlineFormSet):
             if self.data:   # 提交数据时
                 pk_field = self.model._meta.pk
                 pks = []
-                for i in xrange(self.total_form_count()):
+                for i in range(self.total_form_count()):
                     prefix = self.add_prefix(i)
                     pk_val = self.data.get('%s-%s' % (prefix, pk_field.name))
                     if pk_val is not None:
@@ -421,7 +422,7 @@ class ProxyModelAdmin(admin.ModelAdmin):
 
     def formfield_for_dbfield(self, db_field, **kwargs):
         if isinstance(db_field, models.ImageField):
-            request = kwargs.pop("request", None)
+            kwargs.pop("request", None)
             kwargs['widget'] = AdminImageWidget
             return db_field.formfield(**kwargs)
         return super(ProxyModelAdmin, self).formfield_for_dbfield(db_field, **kwargs)
@@ -482,7 +483,7 @@ class ProxyModelAdmin(admin.ModelAdmin):
     def has_change_permission(self, request, obj=None):
         '''add inspection of changeable option
         '''
-        
+
         ret = False
         if obj:
             if self.editable:
@@ -911,10 +912,7 @@ class HumanizedModelResource(BaseModelResource):
         if field:
             localize_method = 'dehydrate_%s' % field_name
             if django_field.choices:
-                setattr(cls, localize_method,
-                        lambda self, obj: getattr(obj, 'get_%s_display' % \
-                                                  django_field.name
-                                                  )())
+                setattr(cls, localize_method, lambda self, obj: getattr(obj, 'get_%s_display' % django_field.name)())
             elif isinstance(django_field, RelatedField):
                 setattr(cls, localize_method,
                         lambda self, obj: force_text(getattr(obj, django_field.name)))

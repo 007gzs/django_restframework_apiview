@@ -18,6 +18,7 @@ COUPON_CODE_CHARS = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ'
 
 LST_PLATE_FOLLLOW_CHARS = tuple(string.ascii_uppercase + string.digits)
 
+
 class ValidateMixin(object):
     '''
     Extend Validator a method 'is_valid'
@@ -30,8 +31,10 @@ class ValidateMixin(object):
         except ValidationError:
             return False
 
+
 class RegexValidatorPlus(ValidateMixin, RegexValidator):
     pass
+
 
 class ComplexityValidator(ValidateMixin, BaseValidator):
     min_length = 6
@@ -103,6 +106,7 @@ class ComplexityValidator(ValidateMixin, BaseValidator):
         for char_type in self.char_types:
             if checking_map[char_type] > 0:
                 raise ValidationError(self.message['default'], self.code, params)
+
 
 # 密码强度
 auth_password = ComplexityValidator(min_length=8, max_length=1024, min_types=3)

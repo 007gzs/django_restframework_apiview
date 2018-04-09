@@ -14,6 +14,7 @@ from rest_framework.response import Response
 from .base import ViewMetaclass, ViewOptions
 from .param import Param
 
+
 class APIViewOptions(ViewOptions):
     """APIView options class
 
@@ -34,13 +35,18 @@ class APIViewOptions(ViewOptions):
             view = wrapper(view)
         return view
 
+
 class View(six.with_metaclass(ViewMetaclass, APIView)):
-    """Rest-Framework compatible view"""
+    """
+    Rest-Framework compatible view
+    """
 
     option_class = APIViewOptions
+
     def __init__(self, *args, **kwargs):
         super(View, self).__init__(*args, **kwargs)
-        self.http_method_names = self.http_method_names + ["ws",]
+        self.http_method_names = self.http_method_names + ["ws", ]
+
     def get_renderer_context(self):
         context = super(View, self).get_renderer_context()
         context.update({
@@ -51,7 +57,7 @@ class View(six.with_metaclass(ViewMetaclass, APIView)):
     def dispatch(self, request, *args, **kwargs):
         self.args = args
         self.kwargs = kwargs
-        ___ = request.body
+        ___ = request.body  # NOQA
         request = self.initialize_request(request, *args, **kwargs)
         self.request = request
         self.headers = self.default_response_headers
@@ -67,7 +73,7 @@ class View(six.with_metaclass(ViewMetaclass, APIView)):
             if self.is_ws:
                 handler_name = "ws"
             if handler_name in self.http_method_names:
-                opts = self._meta
+                # opts = self._meta
                 if hasattr(self, handler_name):
                     handler = getattr(self, handler_name)
                     if not getattr(handler, '_decorated', False):

@@ -1,7 +1,7 @@
 #! /usr/bin/env python
 # encoding: utf-8
 #############################################################################
-# Documentation				    #
+# Documentation                    #
 #############################################################################
 
 # Author:   Todd Whiteman
@@ -11,7 +11,7 @@
 # Homepage: http://twhiteman.netfirms.com/des.html
 #
 # This is a pure python implementation of the DES encryption algorithm.
-# It's pure python to avoid portability issues, since most DES 
+# It's pure python to avoid portability issues, since most DES
 # implementations are programmed in C (for performance reasons).
 #
 # Triple DES class is also implemented, utilising the DES base. Triple DES
@@ -34,15 +34,15 @@ pyDes.des(key, [mode], [IV], [pad], [padmode])
 pyDes.triple_des(key, [mode], [IV], [pad], [padmode])
 
 key     -> Bytes containing the encryption key. 8 bytes for DES, 16 or 24 bytes
-	   for Triple DES
+       for Triple DES
 mode    -> Optional argument for encryption type, can be either
-	   pyDes.ECB (Electronic Code Book) or pyDes.CBC (Cypher Block Chaining)
+       pyDes.ECB (Electronic Code Book) or pyDes.CBC (Cypher Block Chaining)
 IV      -> Optional Initial Value bytes, must be supplied if using CBC mode.
-	   Length must be 8 bytes.
+       Length must be 8 bytes.
 pad     -> Optional argument, set the pad character (PAD_NORMAL) to use during
-	   all encrypt/decrpt operations done with this instance.
+       all encrypt/decrpt operations done with this instance.
 padmode -> Optional argument, set the padding mode (PAD_NORMAL or PAD_PKCS5)
-	   to use during all encrypt/decrpt operations done with this instance.
+       to use during all encrypt/decrpt operations done with this instance.
 
 I recommend to use PAD_PKCS5 padding, as then you never need to worry about any
 padding issues, as the padding can be removed unambiguously upon decrypting
@@ -55,13 +55,13 @@ decrypt(data, [pad], [padmode])
 
 data    -> Bytes to be encrypted/decrypted
 pad     -> Optional argument. Only when using padmode of PAD_NORMAL. For
-	   encryption, adds this characters to the end of the data block when
-	   data is not a multiple of 8 bytes. For decryption, will remove the
-	   trailing characters that match this pad character from the last 8
-	   bytes of the unencrypted data block.
+       encryption, adds this characters to the end of the data block when
+       data is not a multiple of 8 bytes. For decryption, will remove the
+       trailing characters that match this pad character from the last 8
+       bytes of the unencrypted data block.
 padmode -> Optional argument, set the padding mode, must be one of PAD_NORMAL
-	   or PAD_PKCS5). Defaults to PAD_NORMAL.
-	  
+       or PAD_PKCS5). Defaults to PAD_NORMAL.
+
 
 Example
 -------
@@ -104,6 +104,7 @@ PAD_PKCS5 = 2
 #            this padding mode.
 # For a good description of the PKCS5 padding technique, see:
 # http://www.faqs.org/rfcs/rfc1423.html
+
 
 # The base class shared by des and triple des.
 class _baseDes(object):
@@ -232,7 +233,7 @@ class _baseDes(object):
         # Only accept byte strings or ascii unicode values, otherwise
         # there is no way to correctly decode the data into bytes.
         if _pythonMajorVersion < 3:
-            if isinstance(data, unicode):
+            if isinstance(data, unicode):  # NOQA
                 raise ValueError("pyDes can only work with bytes, not Unicode strings.")
         else:
             if isinstance(data, str):
@@ -246,7 +247,7 @@ class _baseDes(object):
 
 
 #############################################################################
-# 				    DES					    #
+#                     DES                        #
 #############################################################################
 class des(_baseDes):
     """DES encryption/decrytpion class
@@ -267,16 +268,16 @@ class des(_baseDes):
         with this instance.
     """
 
-
     # Permutation and translation tables for DES
-    __pc1 = [56, 48, 40, 32, 24, 16, 8,
-             0, 57, 49, 41, 33, 25, 17,
-             9, 1, 58, 50, 42, 34, 26,
-             18, 10, 2, 59, 51, 43, 35,
-             62, 54, 46, 38, 30, 22, 14,
-             6, 61, 53, 45, 37, 29, 21,
-             13, 5, 60, 52, 44, 36, 28,
-             20, 12, 4, 27, 19, 11, 3
+    __pc1 = [
+        56, 48, 40, 32, 24, 16, 8,
+        0, 57, 49, 41, 33, 25, 17,
+        9, 1, 58, 50, 42, 34, 26,
+        18, 10, 2, 59, 51, 43, 35,
+        62, 54, 46, 38, 30, 22, 14,
+        6, 61, 53, 45, 37, 29, 21,
+        13, 5, 60, 52, 44, 36, 28,
+        20, 12, 4, 27, 19, 11, 3
     ]
 
     # number left rotations of pc1
@@ -297,14 +298,15 @@ class des(_baseDes):
     ]
 
     # initial permutation IP
-    __ip = [57, 49, 41, 33, 25, 17, 9, 1,
-            59, 51, 43, 35, 27, 19, 11, 3,
-            61, 53, 45, 37, 29, 21, 13, 5,
-            63, 55, 47, 39, 31, 23, 15, 7,
-            56, 48, 40, 32, 24, 16, 8, 0,
-            58, 50, 42, 34, 26, 18, 10, 2,
-            60, 52, 44, 36, 28, 20, 12, 4,
-            62, 54, 46, 38, 30, 22, 14, 6
+    __ip = [
+        57, 49, 41, 33, 25, 17, 9, 1,
+        59, 51, 43, 35, 27, 19, 11, 3,
+        61, 53, 45, 37, 29, 21, 13, 5,
+        63, 55, 47, 39, 31, 23, 15, 7,
+        56, 48, 40, 32, 24, 16, 8, 0,
+        58, 50, 42, 34, 26, 18, 10, 2,
+        60, 52, 44, 36, 28, 20, 12, 4,
+        62, 54, 46, 38, 30, 22, 14, 6
     ]
 
     # Expansion table for turning 32 bit blocks into 48 bits
@@ -354,7 +356,6 @@ class des(_baseDes):
                  7, 11, 4, 1, 9, 12, 14, 2, 0, 6, 10, 13, 15, 3, 5, 8,
                  2, 1, 14, 7, 4, 10, 8, 13, 15, 12, 9, 0, 3, 5, 6, 11],
     ]
-
 
     # 32-bit permutation function P used on the output of the S-boxes
     __p = [
@@ -408,8 +409,8 @@ class des(_baseDes):
             # Turn the strings into integers. Python 3 uses a bytes
             # class, which already has this behaviour.
             data = [ord(c) for c in data]
-        l = len(data) * 8
-        result = [0] * l
+        datalen = len(data) * 8
+        result = [0] * datalen
         pos = 0
         for ch in data:
             i = 7
@@ -496,16 +497,16 @@ class des(_baseDes):
 
             # Exclusive or R[i - 1] with K[i], create B[1] to B[8] whilst here
             self.R = list(map(lambda x, y: x ^ y, self.R, self.Kn[iteration]))
-            B = [self.R[:6], self.R[6:12], self.R[12:18], self.R[18:24], self.R[24:30], self.R[30:36], self.R[36:42],
-                 self.R[42:]]
+            B = [self.R[:6], self.R[6:12], self.R[12:18], self.R[18:24],
+                 self.R[24:30], self.R[30:36], self.R[36:42], self.R[42:]]
             # Optimization: Replaced below commented code with above
-            #j = 0
-            #B = []
-            #while j < len(self.R):
-            #	self.R[j] = self.R[j] ^ self.Kn[iteration][j]
-            #	j += 1
-            #	if j % 6 == 0:
-            #		B.append(self.R[j-6:j])
+            # j = 0
+            # B = []
+            # while j < len(self.R):
+            #     self.R[j] = self.R[j] ^ self.Kn[iteration][j]
+            #     j += 1
+            #     if j % 6 == 0:
+            #         B.append(self.R[j-6:j])
 
             # Permutate B[1] to B[8] using the S-Boxes
             j = 0
@@ -534,10 +535,10 @@ class des(_baseDes):
             # Xor with L[i - 1]
             self.R = list(map(lambda x, y: x ^ y, self.R, self.L))
             # Optimization: This now replaces the below commented code
-            #j = 0
-            #while j < len(self.R):
-            #	self.R[j] = self.R[j] ^ self.L[j]
-            #	j += 1
+            # j = 0
+            # while j < len(self.R):
+            #     self.R[j] = self.R[j] ^ self.L[j]
+            #     j += 1
 
             # L[i] becomes R[i - 1]
             self.L = tempR
@@ -548,7 +549,6 @@ class des(_baseDes):
         # Final permutation of R[16]L[16]
         self.final = self.__permutate(des.__fp, self.R + self.L)
         return self.final
-
 
     # Data to be encrypted/decrypted
     def crypt(self, data, crypt_type):
@@ -576,19 +576,19 @@ class des(_baseDes):
 
         # Split the data into blocks, crypting each one seperately
         i = 0
-        dict = {}
+        # dict = {}
         result = []
-        #cached = 0
-        #lines = 0
+        # cached = 0
+        # lines = 0
         while i < len(data):
             # Test code for caching encryption results
-            #lines += 1
-            #if dict.has_key(data[i:i+8]):
-            #print "Cached result for: %s" % data[i:i+8]
-            #	cached += 1
-            #	result.append(dict[data[i:i+8]])
-            #	i += 8
-            #	continue
+            # lines += 1
+            # if dict.has_key(data[i:i+8]):
+            # print "Cached result for: %s" % data[i:i+8]
+            #    cached += 1
+            #    result.append(dict[data[i:i+8]])
+            #    i += 8
+            #    continue
 
             block = self.__String_to_BitList(data[i:i + 8])
 
@@ -596,31 +596,30 @@ class des(_baseDes):
             if self.getMode() == CBC:
                 if crypt_type == des.ENCRYPT:
                     block = list(map(lambda x, y: x ^ y, block, iv))
-                #j = 0
-                #while j < len(block):
-                #	block[j] = block[j] ^ iv[j]
-                #	j += 1
+                # j = 0
+                # while j < len(block):
+                #    block[j] = block[j] ^ iv[j]
+                #    j += 1
 
                 processed_block = self.__des_crypt(block, crypt_type)
 
                 if crypt_type == des.DECRYPT:
                     processed_block = list(map(lambda x, y: x ^ y, processed_block, iv))
-                    #j = 0
-                    #while j < len(processed_block):
-                    #	processed_block[j] = processed_block[j] ^ iv[j]
-                    #	j += 1
+                    # j = 0
+                    # while j < len(processed_block):
+                    #     processed_block[j] = processed_block[j] ^ iv[j]
+                    #     j += 1
                     iv = block
                 else:
                     iv = processed_block
             else:
                 processed_block = self.__des_crypt(block, crypt_type)
 
-
             # Add the resulting crypted block to our list
-            #d = self.__BitList_to_String(processed_block)
-            #result.append(d)
+            # d = self.__BitList_to_String(processed_block)
+            # result.append(d)
             result.append(self.__BitList_to_String(processed_block))
-            #dict[data[i:i+8]] = d
+            # dict[data[i:i+8]] = d
             i += 8
 
         # print "Lines: %d, cached: %d" % (lines, cached)
@@ -673,7 +672,7 @@ class des(_baseDes):
 
 
 #############################################################################
-# 				Triple DES				    #
+#                 Triple DES                    #
 #############################################################################
 class triple_des(_baseDes):
     """Triple DES encryption/decrytpion class

@@ -12,9 +12,11 @@ from .exceptions import DTDSchemaError, DTDValidationError, DTDFlexError
 
 VALUEED_TYPES = ('boolean', 'integer', 'null', 'number', 'string')
 
+
 def _value(validator, value, instance, schema):
     if instance != value:
         yield ValidationError('%s is not the value %s' % (instance, value))
+
 
 # add `value` schema to validate equality conveniently
 draft4_schema_ext = Draft4Validator.META_SCHEMA.copy()
@@ -44,11 +46,13 @@ for schema, types in iteritems(ExtDraft4Validator.DEFAULT_TYPES):
 
 DEFAULT_SCHEMA_NODE = {}
 
+
 def get_subnode(root, path):
     node = root
     for step in path:
         node = node[step]
     return node
+
 
 def get_subpath(name, path):
     sub_path = []
@@ -56,6 +60,7 @@ def get_subpath(name, path):
     if name is not None:
         sub_path.append(name)
     return sub_path
+
 
 def json2schema(node, name=None, path=(), check_value=True):
     """Return a strict validation schema for the given JSON node"""
@@ -109,6 +114,7 @@ def json2schema(node, name=None, path=(), check_value=True):
         schema['value'] = node
     return schema
 
+
 def gen_errors(data, schema, valudator=None):
     """Return an errors' generation"""
     valudator = valudator or default_validator
@@ -123,9 +129,11 @@ def gen_errors(data, schema, valudator=None):
                 cause=err.cause,
             )
 
+
 def validate(data, schema, validator=None):
     for err in gen_errors(data, schema, validator):
         raise err
+
 
 def flex_schema_by_err(schema, err):
     """Flex schema according to the DTDValidationError with handlers defined in this module"""
@@ -145,10 +153,12 @@ def flex_schema_by_err(schema, err):
     schema_node = get_subnode(schema, list(err.schema_path)[:-1])
     handler(schema_node, err)
 
+
 def flex_schema_by_errs(schema, errs):
     """Flex schema according to the DTDValidationErrors"""
     for err in errs:
         flex_schema_by_err(schema, err)
+
 
 def flex_type(schema, err):
     if schema['type'] == 'integer':
@@ -165,23 +175,29 @@ def flex_type(schema, err):
                 cause=err.cause,
             )
 
+
 def flex_required(schema, err):
     required = set(schema['required']).intersection(err.instance)
     schema['required'] = list(required)
 
+
 def flex_minItems(schema, err):
     del schema['minItems']
+
 
 def flex_maxItems(schema, err):
     del schema['maxItems']
 
+
 def flex_value(schema, err):
     del schema['value']
+
 
 def flex_additionalProperties(schema, err):
     extras = find_additional_properties(err.instance, err.schema)
     for extra in extras:
         schema['properties'][extra] = json2schema(err.instance[extra], extra, err.path)
+
 
 def flex_anyOf(schema, err):
     sub_schema = json2schema(err.instance, err.path, check_value=False)

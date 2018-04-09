@@ -6,9 +6,11 @@ from __future__ import unicode_literals, absolute_import
 from django.forms import widgets
 from django.utils.translation import ugettext_lazy
 
+
 class BooleanInput(widgets.CheckboxInput):
     def value_from_datadict(self, data, files, name):
         return data.get(name, '')
+
 
 class NullBooleanSelect(widgets.Select):
     def __init__(self, attrs=None):

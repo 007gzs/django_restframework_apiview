@@ -3,12 +3,10 @@
 
 from __future__ import absolute_import, unicode_literals
 
-import datetime
 
 from django.db import DatabaseError
 from django.db import models
 from django.db.models.manager import EmptyManager
-from django.utils import six
 from django.contrib.auth.models import Group, Permission
 from django.utils.functional import cached_property
 
@@ -75,8 +73,7 @@ class ModelFieldChangeMixin(ModelChangeMixin):
                     # because the rel field would not be kept in
                     # `changed_map` when its data did not load
                     # from DB after set it to a new Model object.
-                    if (name in self.__dict__
-                        or getattr(self, field.attname) is None):
+                    if (name in self.__dict__ or getattr(self, field.attname) is None):
                         self._to_change(name, value)
                 else:
                     self._to_change(name, value)
@@ -107,8 +104,10 @@ class BaseModel(models.Model, ModelFieldChangeMixin):
 
     @classmethod
     def autocomplete_search_fields(cls):
+
         if hasattr(cls, '_autocomplete_search_fields'):
             return cls._autocomplete_search_fields
+
         # Apply keyword searches.
         def construct_search(field_name):
             if field_name.startswith('^'):
@@ -124,7 +123,7 @@ class BaseModel(models.Model, ModelFieldChangeMixin):
     @classmethod
     def search_fields(cls):
         if hasattr(cls, '_search_fields'):
-            return cls._search_fields 
+            return cls._search_fields
         ret = set()
         for field in cls._meta.fields:
             if not field.db_index and not field.unique:
@@ -157,9 +156,13 @@ class BaseModel(models.Model, ModelFieldChangeMixin):
             fd = [f.name for f in self._meta.fields]
 
             for f in update_fields:
-                if f not in fd: update_fields.remove(f)
+                if f not in fd:
+                    update_fields.remove(f)
         try:
-            super(BaseModel, self).save(force_insert=force_insert, force_update=force_update, using=using, update_fields=update_fields)
+            super(BaseModel, self).save(force_insert=force_insert,
+                                        force_update=force_update,
+                                        using=using,
+                                        update_fields=update_fields)
         except DatabaseError as exp:
             if str(exp).endswith('did not affect any rows.'):
                 pass

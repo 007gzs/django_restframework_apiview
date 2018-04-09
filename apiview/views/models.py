@@ -3,6 +3,7 @@
 from __future__ import unicode_literals, absolute_import
 
 import json
+import six
 from hashlib import md5
 
 from io import BytesIO
@@ -22,7 +23,9 @@ TEST_PARAM = '_test_case_'
 TEST_KEY = '8F7CE16E134926D721AB3D109714DF42'
 TEST_REQUEST_PARAM = '_test_case_request_'
 
+
 class JSONFormField(forms.CharField):
+
     def to_python(self, value):
         if value in self.empty_values:
             return None
@@ -34,9 +37,10 @@ class JSONFormField(forms.CharField):
             value = json.dumps(value, indent=4)
         return value
 
+
 class JSONField(models.TextField):
     def to_python(self, value):
-        if isinstance(value, basestring):
+        if isinstance(value, six.string_types):
             return json.loads(value)
         return value
 
@@ -54,6 +58,7 @@ class JSONField(models.TextField):
         defaults = {'form_class': JSONFormField}
         defaults.update(**kwargs)
         return super(JSONField, self).formfield(**defaults)
+
 
 class TestCase(models.Model):
     path = models.CharField(_('path'), max_length=100, db_index=True)
@@ -110,7 +115,7 @@ class TestCase(models.Model):
     def request_data_dict(self):
         if not self.request_data:
             return None
-        elif isinstance(self.request_data, basestring):
+        elif isinstance(self.request_data, six.string_types):
             self.request_data = json.loads(self.request_data)
         return self.request_data
 
@@ -118,7 +123,7 @@ class TestCase(models.Model):
     def response_data_dict(self):
         if not self.response_data:
             return None
-        elif isinstance(self.response_data, basestring):
+        elif isinstance(self.response_data, six.string_types):
             self.response_data = json.loads(self.response_data)
         return self.response_data
 
@@ -126,7 +131,7 @@ class TestCase(models.Model):
     def response_schema_dict(self):
         if not self.response_schema:
             return None
-        elif isinstance(self.response_schema, basestring):
+        elif isinstance(self.response_schema, six.string_types):
             self.response_schema = json.loads(self.response_schema)
         return self.response_schema
 
@@ -135,7 +140,7 @@ class TestCase(models.Model):
         query_string = request.META.get('QUERY_STRING', '')
         try:
             body = request.body
-        except:
+        except Exception as e:
             body = request._body = request.read()
             request._stream = BytesIO(request._body)
 
@@ -238,7 +243,7 @@ class TestCase(models.Model):
         validate_method = getattr(self, 'validate_' + data['type'])
         for err in validate_method(response.content):
             yield err
- 
+
     def schema_json(self, content):
         from .dtd.jsonschema import json2schema, gen_errors, flex_schema_by_errs
         data = json.loads(content)

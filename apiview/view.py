@@ -27,7 +27,7 @@ class APIView(ViewBase):
     def format_res_data(self, context):
         if not isinstance(context, dict) or 'code' not in context:
             context = self.get_default_context(data=context)
-        
+
         return Response(utility.format_res_data(context))
 
     def check_api_permissions(self, request, *args, **kwargs):
@@ -93,5 +93,3 @@ class APIView(ViewBase):
 
         utility.reportExceptionByMail("500")
         return self.format_res_data(ErrCode.ERR_SYS_ERROR.get_res_dict())
-
-

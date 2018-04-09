@@ -8,6 +8,7 @@ from django.db import transaction
 
 from .models import TestCase, TEST_REQUEST_PARAM, TEST_PARAM, TEST_KEY
 
+
 def testcase(view):
     @wraps(view)
     def wrapper(request, *args, **kwargs):
@@ -34,4 +35,3 @@ def testcase(view):
         return response
 
     return wrapper
-

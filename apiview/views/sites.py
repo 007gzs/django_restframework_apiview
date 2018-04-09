@@ -6,6 +6,7 @@ from collections import OrderedDict
 
 from django.contrib.admin.sites import AlreadyRegistered
 
+
 class ViewSite(object):
     """
         Site management for view classes
@@ -30,7 +31,8 @@ class ViewSite(object):
 
     def register(self, view_class, **options):
         if options:
-            class Meta: pass
+            class Meta:
+                pass
             for att, val in options.items():
                 setattr(Meta, att, val)
             attrs = {
@@ -50,10 +52,9 @@ class ViewSite(object):
         from django.conf.urls import url
         urls = []
         for path, view_class in self._registry.items():
-            urls.append(url(r'^%s/?$' % path, view_class.as_view(),
-                name=view_class._meta.name))
+            urls.append(url(r'^%s/?$' % path, view_class.as_view(), name=view_class._meta.name))
         return urls
-    
+
     @property
     def urls(self):
         return self.get_urls(), self.app_name, self.name

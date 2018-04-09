@@ -27,8 +27,7 @@ def styles2python(str_style):
 
 
 def python2styles(dt_style):
-    return '; '.join([': '.join(css_pair) \
-            for css_pair in six.iteritems(dt_style)])
+    return '; '.join([': '.join(css_pair) for css_pair in six.iteritems(dt_style)])
 
 
 class TagWidget(forms.Widget):
@@ -47,9 +46,9 @@ class TagWidget(forms.Widget):
         final_attrs = self.build_attrs(attrs)
         self.patch_inline_style(final_attrs)
         return format_html('<{tag} {attrs}>{value}</{tag}>',
-            tag=self.tag,
-            value=value,
-            attrs=flatatt(final_attrs))
+                           tag=self.tag,
+                           value=value,
+                           attrs=flatatt(final_attrs))
 
     def _patch_inline_style(self, attrs):
         self.tag = attrs.pop('tag', None) or self.tag
@@ -82,9 +81,9 @@ class ImageWidget(TagWidget):
         self.patch_inline_style(final_attrs)
         if value:
             return format_html('<a target="_blank" href="{url}"><{tag} {attrs} src="{url}" /></a>',
-                tag=self.tag,
-                url=value.url,
-                attrs=flatatt(final_attrs))
+                               tag=self.tag,
+                               url=value.url,
+                               attrs=flatatt(final_attrs))
         else:
             return ''
 

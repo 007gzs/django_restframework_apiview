@@ -3,18 +3,12 @@
 """
 Declare the metaclass of the views to manage view generation
 """
-
-from  __future__ import absolute_import, unicode_literals
+from __future__ import absolute_import, unicode_literals
 
 from collections import OrderedDict
-try:
-    from urlparse import urljoin
-except:
-    from urllib.parse import urljoin
+from six.moves.urllib.parse import urljoin
 from django import http
 from django import forms
-from django.core.urlresolvers import RegexURLPattern
-from django.conf import settings
 from django.views.generic import View as DjangoView
 from django.utils import six
 from django.utils.functional import cached_property
@@ -23,9 +17,11 @@ from django.utils.encoding import force_text, force_str
 from .utils import split_camel_name
 from .param import Param
 
+
 def _camel2path(name):
     """GenerateURLs => generate/urls"""
     return '/'.join(split_camel_name(name)).lower() + '/'
+
 
 class ViewOptions(object):
     """View options class
@@ -111,7 +107,7 @@ class ViewOptions(object):
         f_lens = [len(field) for field in fields]
         rows = []
         if with_header:
-          rows.append(fields)
+            rows.append(fields)
         for name, field in self.param_fields.items():
             if field.required:
                 field_name = '*%s*' % name
@@ -147,6 +143,7 @@ class ViewOptions(object):
             handler = decorator(handler)
         return handler
 
+
 class ViewMetaclass(type):
     """Metaclass of the view classes"""
 
@@ -171,6 +168,7 @@ class ViewMetaclass(type):
 
         return new_cls
 
+
 class View(six.with_metaclass(ViewMetaclass, DjangoView)):
     """Base view generated from django view"""
 
@@ -180,13 +178,12 @@ class View(six.with_metaclass(ViewMetaclass, DjangoView)):
         handler_name = request.method.lower()
         try:
             if handler_name in self.http_method_names:
-                opts = self._meta
-
+                # opts = self._meta
                 if hasattr(self, handler_name):
                     handler = getattr(self, handler_name)
                 else:
                     handler = self.http_method_not_allowed
-                
+
                 request.params = Param(self, request)
                 response = handler(request, *args, **kwargs)
             else:

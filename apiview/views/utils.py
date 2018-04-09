@@ -6,6 +6,7 @@ View utils package
 
 from __future__ import unicode_literals, absolute_import
 
+
 def split_camel_name(name, fall=False):
     """Split camel formated names:
 

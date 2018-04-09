@@ -13,7 +13,6 @@ class RequestCompatMiddleware(MiddlewareMixin):
         if getattr(settings, "KILL_CSRF", False):
             setattr(request, '_dont_enforce_csrf_checks', True)
         # 兼容body
-        ___ = request.body
+        ___ = request.body  # NOQA
         request.REQUEST = request.GET.copy()
         request.REQUEST.update(request.POST)
-

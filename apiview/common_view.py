@@ -36,7 +36,7 @@ def generate_api_js(request):
                 continue
             str_args += ', %s' % param
             str_data += "%s:%s," % (param, param)
-        
+
         str_data = str_data[:-1]
         content += '''
 // %s
@@ -95,9 +95,9 @@ def get_view_list(urlpattern=None, head='/'):
             ret += get_view_list(urlpattern, get_url(head, urlpattern))
         return ret
     if hasattr(urlpattern, 'callback') \
-        and urlpattern.callback \
-        and hasattr(urlpattern.callback, 'view_class') \
-        and issubclass(urlpattern.callback.view_class, APIView):
+            and urlpattern.callback \
+            and hasattr(urlpattern.callback, 'view_class') \
+            and issubclass(urlpattern.callback.view_class, APIView):
         retdict = dict()
         viewclass = urlpattern.callback.view_class
         retdict['viewclass'] = viewclass
@@ -126,4 +126,3 @@ def get_view_list(urlpattern=None, head='/'):
             ret += get_view_list(pattern, get_url(head, pattern))
 
     return ret
-

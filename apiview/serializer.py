@@ -4,7 +4,7 @@
 from __future__ import unicode_literals
 
 import six
-from django.conf import settings
+
 from django.db import models
 from rest_framework import serializers
 from rest_framework.fields import empty

@@ -1,11 +1,9 @@
 #! /usr/bin/env python
 # encoding: utf-8
 from django import forms
-try:
-    from django.forms.util import ErrorDict
-except ImportError:
-    from django.forms.utils import ErrorDict
+from django.forms.utils import ErrorDict
 from django.utils.encoding import force_text
+
 
 class TextErrorDict(ErrorDict):
     def __str__(self):
@@ -13,6 +11,7 @@ class TextErrorDict(ErrorDict):
 
     def __unicode__(self):
         return force_text(self.as_text())
+
 
 class Param(object):
     """
@@ -41,11 +40,11 @@ class Param(object):
             self._clean_dependency()
         else:
             self._cleaned_data = {}
-    
+
     @property
     def form(self):
         return self._bounded_form
-    
+
     @form.setter
     def form(self, other):
         self._bounded_form = other
@@ -71,7 +70,7 @@ class Param(object):
                     except forms.ValidationError:
                         continue
                     for sub_name, sub_field in pairs:
-                        _ = sub_field.clean(self._cleaned_data[sub_name])
+                        _ = sub_field.clean(self._cleaned_data[sub_name])  # NOQA
                 except forms.ValidationError as exc:
                     error_dict = TextErrorDict([(sub_name, exc.messages)])
                     errors[name] = [error_dict]

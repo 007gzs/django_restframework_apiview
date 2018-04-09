@@ -6,6 +6,7 @@ import unittest
 
 from .jsonschema import json2schema, gen_errors, flex_schema_by_errs
 
+
 class TestJSONSchema(unittest.TestCase):
     def test_json2schema(self):
         self.assertEqual(json2schema([])['type'], 'array')
@@ -21,7 +22,7 @@ class TestJSONSchema(unittest.TestCase):
             'string': 'value',
             'int': 1,
             'num': 1.0,
-            'array': [1,2,3,4],
+            'array': [1, 2, 3, 4],
             'object': {
                 'sub_object': {
                     'sub_string': 'value',
@@ -51,21 +52,20 @@ class TestJSONSchema(unittest.TestCase):
         flex_schema_by_errs(schema, list(gen_errors(data, schema)))
         self.assertFalse(list(gen_errors(data, schema)))
 
-
         # flex minItems and value
-        data['array'] = [1,2]
+        data['array'] = [1, 2]
         self.assertEqual(len(list(gen_errors(data, schema))), 2)
         flex_schema_by_errs(schema, list(gen_errors(data, schema)))
         self.assertFalse(list(gen_errors(data, schema)))
 
         # flex maxItems
-        data['array'] = [1,2,3,4] * 2
+        data['array'] = [1, 2, 3, 4] * 2
         self.assertEqual(next(gen_errors(data, schema)).validator, 'maxItems')
         flex_schema_by_errs(schema, list(gen_errors(data, schema)))
         self.assertFalse(list(gen_errors(data, schema)))
 
         # flex anyOf
-        data['array'] = [1,2,'5']
+        data['array'] = [1, 2, '5']
         self.assertEqual(next(gen_errors(data, schema)).validator, 'anyOf')
         flex_schema_by_errs(schema, list(gen_errors(data, schema)))
         self.assertFalse(list(gen_errors(data, schema)))
@@ -77,10 +77,11 @@ class TestJSONSchema(unittest.TestCase):
         self.assertFalse(list(gen_errors(data, schema)))
 
         # flex complex types array
-        data['object']['sub_object']['sub_array'] = [1,2,'5', {'some': 'mixed value'}]
+        data['object']['sub_object']['sub_array'] = [1, 2, '5', {'some': 'mixed value'}]
         self.assertEqual(next(gen_errors(data, schema)).validator, 'anyOf')
         flex_schema_by_errs(schema, list(gen_errors(data, schema)))
         self.assertFalse(list(gen_errors(data, schema)))
+
 
 if __name__ == '__main__':
     unittest.main()

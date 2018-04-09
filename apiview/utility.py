@@ -3,10 +3,9 @@
 
 from __future__ import absolute_import, unicode_literals
 
+import six
 import base64
-# from datetime import timedelta, datetime
 import datetime
-from decimal import Decimal
 from functools import partial
 import hashlib
 import imghdr
@@ -25,7 +24,7 @@ from django.conf import settings
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.core.files.storage import default_storage
 from django.core.mail.message import EmailMultiAlternatives
-from django.utils.encoding import force_str, force_text
+from django.utils.encoding import force_str, force_text, force_bytes
 
 from . import validators
 
@@ -36,11 +35,15 @@ DATETIME_FORMAT = getattr(settings, 'DATETIME_FORMAT', None)
 ASCII_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ'
 DIGIT_CHARS = '23456789'
 CHARS = DIGIT_CHARS + ASCII_CHARS
+
+
 def id_generator(size=6, chars=CHARS):
     return ''.join(random.sample(chars, int(size)))
 
+
 def ids_generator(size=6, amount=10, chars=CHARS):
     return [id_generator() for _ in range(amount)]
+
 
 def unique_ids_generator(ids, size=6, amount=10, chars=CHARS):
     local_ids = []
@@ -53,31 +56,37 @@ def unique_ids_generator(ids, size=6, amount=10, chars=CHARS):
     return local_ids
 
 
-#用于ImageFiled的upload_to参数，生成文件名，useuuid＝True使用uuid
-#secs为字段列表组成文件名
+# 用于ImageFiled的upload_to参数，生成文件名，useuuid＝True使用uuid
+# secs为字段列表组成文件名
 def uuid_filename_generator(instance, filename, path_format):
     filetype = os.path.splitext(filename)[1]
-    if len(filetype) == 0 : filetype = '.'
+    if len(filetype) == 0:
+        filetype = '.'
 
     basename = ''.join((force_text(uuid.uuid4()), filetype))
 
     dirname = force_text(datetime.datetime.now().strftime(force_str(path_format)))
     filename = posixpath.join(dirname, basename)
     return default_storage.generate_filename(filename)
-    # expandpath = datetime.strftime(datetime.now(), path)
+    # expandpath = datetime.datetime.strftime(datetime.datetime.now(), path)
     # return os.path.join(expandpath, filename)
+
 
 def get_uuid_filename(path_format):
     return partial(uuid_filename_generator, path_format=path_format)
 
 
-#判断是否手机号
+# 判断是否手机号
 def IsMobileNumber(mobile):
-    return(validators.mobile.is_valid(mobile))
+    return validators.mobile.is_valid(mobile)
+
 
 g_weekdaystr = ('周一', '周二', '周三', '周四', '周五', '周六', '周日')
+
+
 def get_weekday_str(date):
     return g_weekdaystr[date.weekday()]
+
 
 def safeMobile(mobile):
     if len(mobile) != 11:
@@ -95,14 +104,17 @@ def priceFormat(price, decimal_places=2):
 #     logging.debug(loginfo, err)
 #     return(Response(err))
 
-#定义枚举
+
+# 定义枚举
 class Enum(object):
     def __init__(self, **kwargs):
         for attr, val in kwargs.items():
             setattr(self, attr, val)
 
+
 def enum(**enums):
     return Enum(**enums)
+
 
 def safe_loadjson(jstr):
     retobj = None
@@ -111,7 +123,7 @@ def safe_loadjson(jstr):
     except Exception as e:
         reportExceptionByMail("json load error")
 
-    return(retobj)
+    return retobj
 
 # def prase_url(request, value):
 #     if not value or value.strip() == '':
@@ -123,14 +135,15 @@ def safe_loadjson(jstr):
 #     else:
 #         return config.SL_HTTP_HOST + value
 
+
 def appendMediaURL(value):
     if hasattr(value, 'url'):
         return value.url
 
     if not value or value.strip() == '':
-        return('')
+        return ''
     else:
-        return(os.path.join(settings.MEDIA_URL, value))
+        return os.path.join(settings.MEDIA_URL, value)
 
 # def real_url(request, pic_field):
 #     if not pic_field:
@@ -156,14 +169,16 @@ def getServerIP():
     try:
         s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         s.connect(('114.114.114.114', 53))
-        ip=s.getsockname()[0]
+        ip = s.getsockname()[0]
     except Exception:
         reportExceptionByMail('get server ip failed')
 
-    return(ip)
+    return ip
 
 
 LST_COLOR_CHARS = ('白', '黑', '红', '绿', '蓝', '黄', '银', '灰', '粉', '紫', '橙', '棕', '香槟', '咖啡', '金')
+
+
 def colorValidate(color):
     if not color or len(color) == 0:
         return '请输入颜色'
@@ -171,7 +186,7 @@ def colorValidate(color):
     if len(color) > 10:
         return '颜色输入过长'
 
-    if 0 not in [string.find(color, c)==-1 for c in LST_COLOR_CHARS]:
+    if 0 not in [string.find(color, c) == -1 for c in LST_COLOR_CHARS]:
         return '请用中文正确输入颜色'
 
     return ''
@@ -180,7 +195,7 @@ def colorValidate(color):
 def sendEmail(subject, add_to, html_content):
     from django.conf import settings
 
-    if isinstance(add_to, basestring):
+    if isinstance(add_to, six.string_types):
         addr1 = add_to
         add_to = list()
         add_to.append(addr1)
@@ -189,11 +204,11 @@ def sendEmail(subject, add_to, html_content):
     if subject.find(settings.EMAIL_SUBJECT_PREFIX) < 0:
         subject = settings.EMAIL_SUBJECT_PREFIX + subject
 
-    #send_mail(subject, html_content, settings.EMAIL_HOST_USER,
-    #add_to, fail_silently=False)
+    # send_mail(subject, html_content, settings.EMAIL_HOST_USER,
+    # add_to, fail_silently=False)
 
-    text_content = 'This is an important message.'
-    #html_content = '<p>This is an <strong>important</strong> message.</p>'
+    # text_content = 'This is an important message.'
+    # html_content = '<p>This is an <strong>important</strong> message.</p>'
 
     msg = EmailMultiAlternatives(subject, html_content, settings.EMAIL_HOST_USER, add_to)
     msg.attach_alternative(html_content, "text/html")
@@ -207,33 +222,37 @@ def earth_distance(lat1, lon1, lat2, lon2):
     radlon1 = (math.pi/180)*lon1
     radlon2 = (math.pi/180)*lon2
 
-    a=radlat1-radlat2
-    b=radlon1-radlon2
-    s=2*math.asin(math.sqrt(math.pow(math.sin(a/2),2)+math.cos(radlat1)*math.cos(radlat2)*math.pow(math.sin(b/2),2)))
-    earth_radius=6378.137
-    s=s*earth_radius
-    if s<0:
+    a = radlat1-radlat2
+    b = radlon1-radlon2
+    s = 2 * math.asin(math.sqrt(math.pow(math.sin(a / 2), 2) +
+                                math.cos(radlat1) *
+                                math.cos(radlat2) *
+                                math.pow(math.sin(b / 2), 2)))
+    earth_radius = 6378.137
+    s = s * earth_radius
+    if s < 0:
         return -s
     else:
         return s
 
 
-#返回一天的最开始时间和返回时间，组成元组
+# 返回一天的最开始时间和返回时间，组成元组
 def dayRange(day):
     day_min = datetime.datetime.combine(day, datetime.time.min)
     day_max = datetime.datetime.combine(day, datetime.time.max)
-    return (day_min, day_max)
+    return day_min, day_max
 
-#返回一月的最开始时间和返回时间，组成元组
+
+# 返回一月的最开始时间和返回时间，组成元组
 def monthRange(day):
     import calendar
 
-    lastday = calendar.monthrange(day.year,day.month)
+    lastday = calendar.monthrange(day.year, day.month)
 
     fromday = datetime.datetime(day.year, day.month, 1)
     today = datetime.datetime(day.year, day.month, lastday[1])
 
-    return(fromday,today)
+    return fromday, today
 
 
 def rsa_decrypt(srcStr, prikey):
@@ -249,36 +268,41 @@ def rsa_decrypt(srcStr, prikey):
     for sec in range(0, secs):
         result += rsa.decrypt(res_data[sec*128:sec*128+128], prikey)
 
-    return(result)
+    return result
+
 
 def querystring2dict(querystring):
-    try:
-        import urlparse
-    except:
-        from urllib.parse import urlparse
-    resultDict = dict((k,v if len(v)>1 else v[0]) for k,v in urlparse.parse_qs(querystring).iteritems())
-    return(resultDict)
+    from six.moves.urllib_parse import urlparse
+    resultDict = dict((k, v if len(v) > 1 else v[0]) for k, v in urlparse.parse_qs(querystring).items())
+    return resultDict
 
-#获取严重级别颜色
+
+# 获取严重级别颜色
 def getSeverityColor(val, step, shreshold=0):
     level = (val - shreshold) / step
-    if level > 255: level = 255
-    if level < 0: level = 0
+    if level > 255:
+        level = 255
+    if level < 0:
+        level = 0
 
-    return('#%02x%02x00' % (level, 255-level))
+    return '#%02x%02x00' % (level, 255-level)
 
-#时间差对象转字符串
+
+# 时间差对象转字符串
 def timedelta2Str(dt, ms=False):
     secs = dt.total_seconds()
     sign = "-" if secs < 0 else ""
 
-    if secs < 0 : dt = timedelta(seconds=-secs)
+    if secs < 0:
+        dt = datetime.timedelta(seconds=-secs)
     sdt = str(dt)
     if not ms:
         sdt = sign + sdt.split('.')[0]
-    return(sdt)
+    return sdt
+
 
 _logger_exception = logging.getLogger('exception')
+
 
 def reportExceptionByMail(msg, *args, **kwargs):
 
@@ -292,7 +316,8 @@ def yields(listobj, n=1000):
         yield listobj[n*i:(i+1)*n]
         i += 1
 
-#sql执行结果cursor转换为字典
+
+# sql执行结果cursor转换为字典
 def getCursorDict(c):
     fnames = [fd[0] for fd in c.description]
 
@@ -300,9 +325,10 @@ def getCursorDict(c):
     for row in c:
         result.append(dict(zip(fnames, row)))
 
-    return(result)
+    return result
 
-def filter_emoji(desstr,restr=''):
+
+def filter_emoji(desstr, restr=''):
     '''
     过滤表情
     '''
@@ -312,11 +338,12 @@ def filter_emoji(desstr,restr=''):
         co = re.compile('[\uD800-\uDBFF][\uDC00-\uDFFF]')
     return co.sub(restr, desstr)
 
+
 def str_2_emoji(emoji_str):
-    try:
-        import HTMLParser
-    except:
-        from html.parse import HTMLParser
+    if six.PY3:
+        from html.parser import HTMLParser
+    else:
+        from HTMLParser import HTMLParser
     '''
     把字符串转换为表情
     '''
@@ -324,22 +351,22 @@ def str_2_emoji(emoji_str):
         return emoji_str
     h = HTMLParser.HTMLParser()
     emoji_str = h.unescape(h.unescape(emoji_str))
-    #匹配u"\U0001f61c"和u"\u274c"这种表情的字符串
+    # 匹配u"\U0001f61c"和u"\u274c"这种表情的字符串
     co = re.compile(r"u[\'\"]\\[Uu]([\w\"]{9}|[\w\"]{5})")
-    pos_list=[]
-    result=emoji_str
-    #先找位置
+    pos_list = []
+    result = emoji_str
+    # 先找位置
     for m in co.finditer(emoji_str):
-        pos_list.append((m.start(),m.end()))
-    #根据位置拼接替换
+        pos_list.append((m.start(), m.end()))
+    # 根据位置拼接替换
     for pos in range(len(pos_list)):
-        if pos==0:
-            result=emoji_str[0:pos_list[0][0]]
+        if pos == 0:
+            result = emoji_str[0:pos_list[0][0]]
         else:
-            result=result+emoji_str[pos_list[pos-1][1]:pos_list[pos][0]]
-        result = result +eval(emoji_str[pos_list[pos][0]:pos_list[pos][1]])
-        if pos==len(pos_list)-1:
-            result=result+emoji_str[pos_list[pos][1]:len(emoji_str)]
+            result = result + emoji_str[pos_list[pos-1][1]:pos_list[pos][0]]
+        result = result + eval(emoji_str[pos_list[pos][0]:pos_list[pos][1]])
+        if pos == len(pos_list) - 1:
+            result = result + emoji_str[pos_list[pos][1]:len(emoji_str)]
     return result
 
 
@@ -385,20 +412,22 @@ def format_res_data(data):
             return data.strftime(timeformat)
         elif canstamp:
             return datetime2timestamp(data)
-        else: 
+        else:
             return data
 
 
-#把字典内容赋值给对象属性
+# 把字典内容赋值给对象属性
 def copy_dict2obj(dict, obj):
-    if not dict or not obj: return
+    if not dict or not obj:
+        return
     for key in dict.keys():
         setattr(obj, key, dict[key])
 
 
 def percentage(i1, i2):
-    if i2 == 0: return(None)
-    return round((i1 * 1.0) / (i2 * 100.0),2)
+    if i2 == 0:
+        return None
+    return round((i1 * 1.0) / (i2 * 100.0), 2)
 
 
 def time_to_second(t):
@@ -407,13 +436,12 @@ def time_to_second(t):
     return t.hour * 3600 + t.minute * 60 + t.second
 
 
-#des加解密
+# des加解密
 def des_encode(inputdes, key):
     from . import des
     try:
         des_enc = des.des(key[:8], padmode=des.PAD_PKCS5)
-        if isinstance(inputdes, unicode):
-            inputdes = inputdes.encode('utf8')
+        inputdes = force_bytes(inputdes)
         return base64.b64encode(des_enc.encrypt(inputdes))
     except Exception as e:
         import inspect
@@ -460,8 +488,7 @@ def aes_encode(inputdes, key):
     from Crypto.Cipher import AES
     iv = str(bytearray(16))
     cipher = AES.new(key[:16], AES.MODE_ECB, iv)
-    if isinstance(inputdes, unicode):
-        inputdes = inputdes.encode('utf8')
+    inputdes = force_bytes(inputdes)
     return base64.b64encode(cipher.encrypt(pad(inputdes, 16)))
 
 
@@ -485,13 +512,13 @@ def date_format(date_str):
     try:
         _date = datetime.datetime.strptime(date_str, '%Y-%m-%d').date()
         return _date
-    except:
+    except Exception as e:
         return None
 
 
 def month_from_date(day):
     import calendar
-    if type(day) in (str, unicode):
+    if isinstance(day, six.string_types):
         day = datetime.datetime.strptime(day, '%Y-%m-%d').date()
     month_code = day.strftime("%Y-%m")
     wday, monthRange = calendar.monthrange(day.year, day.month)
@@ -501,7 +528,7 @@ def month_from_date(day):
 
 
 def week_from_date(day):
-    if type(day) in (str, unicode):
+    if isinstance(day, six.string_types):
         day = datetime.datetime.strptime(day, '%Y-%m-%d').date()
     from dateutil.relativedelta import relativedelta, MO, SU
     weekbegin = day + relativedelta(weekday=MO(-1))
@@ -511,14 +538,13 @@ def week_from_date(day):
 
 
 def fields_verify(model_admin, field_names, only_fields=False):
-    from django.contrib.admin.utils import lookup_field
     model = model_admin.model
     real_field_names = []
     for field_name in field_names:
         try:
             if model._meta.get_field(field_name):
                 real_field_names.append(field_name)
-        except:
+        except Exception as e:
             if not only_fields:
                 if hasattr(model_admin, field_name):
                     real_field_names.append(field_name)
@@ -576,7 +602,7 @@ def decode_base64_image(base_str):
     try:
         missing_padding = 4 - len(base_str) % 4
         if missing_padding:
-            base_str += b'='* missing_padding
+            base_str += b'=' * missing_padding
         base_str = base64.b64decode(base_str)
         if len(base_str) > 0:
             image = SimpleUploadedFile(name='pic.jpg', content=base_str, content_type='image/jpeg')
@@ -586,5 +612,3 @@ def decode_base64_image(base_str):
         logging.error(e)
         image = None
     return image
-
-

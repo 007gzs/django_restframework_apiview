@@ -6,8 +6,10 @@ from django.contrib import messages
 from django.contrib.admin import ModelAdmin, site
 from django.utils.translation import ugettext_lazy as _, ungettext
 from django.utils.safestring import mark_safe
+from django.utils.encoding import force_text
 
 from .models import TestCase
+
 
 class TestCaseAdmin(ModelAdmin):
     search_fields = ['path', ]
@@ -16,7 +18,7 @@ class TestCaseAdmin(ModelAdmin):
     readonly = ('path', 'request_md5', 'response_data')
 
     ordering = ('path', 'id')
-    
+
     actions = ['delete_selected', 'mark_valid']
 
     list_per_page = 30
@@ -52,13 +54,12 @@ class TestCaseAdmin(ModelAdmin):
         error_list = []
         try:
             for err in obj.errors:
-                error_list.append('%s: %s' % (
-                    ' - '.join(map(unicode, err.path)),
-                    err.message))
+                error_list.append('%s: %s' % (' - '.join(map(force_text, err.path)), err.message))
         except Exception as exc:
-            error_list.append(unicode(exc))
+            error_list.append(force_text(exc))
         return mark_safe('<br/>'.join(error_list))
 
     errors.short_description = _('errors')
+
 
 site.register(TestCase, TestCaseAdmin)
