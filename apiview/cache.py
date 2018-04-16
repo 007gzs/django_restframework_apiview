@@ -47,7 +47,7 @@ class BaseCacheItem(object):
 
     @classmethod
     def has_key(cls, key):
-        return cache.has_key(cls._getkey(key))
+        return cache.has_key(cls._getkey(key))  # NOQA
 
     @classmethod
     def ttl(cls, key):

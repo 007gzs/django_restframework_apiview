@@ -40,7 +40,7 @@ from import_export.admin import (
 )
 from import_export.resources import ModelDeclarativeMetaclass, ModelResource
 
-from apiview import mailtools, widgets, cache
+from apiview import mailtools, widgets
 
 FIX_COLUMN_VAR = 'fc'
 main.IGNORED_PARAMS += (FIX_COLUMN_VAR,)
