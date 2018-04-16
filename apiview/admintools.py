@@ -57,8 +57,10 @@ def set_cache(method, mask, result):
         method_cache[method.__name__] = cache
         instance._method_cache_ = method_cache
     else:
-        method._mask_ = mask
-        method._result_ = result
+        setattr(method, '_mask_', mask)
+        setattr(method, '_result_', result)
+        # method._mask_ = mask
+        # method._result_ = result
 
 
 def get_cache(method, mask, default=None):
