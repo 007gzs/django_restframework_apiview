@@ -24,17 +24,10 @@ from django.utils.translation import ugettext_lazy as _
 from django.utils.encoding import force_text
 from apiview import utility
 # to prevent Importation-Examination
-
+from django.forms.fields import *  # NOQA
 
 from apiview import validators
 from .widgets import BooleanInput, NullBooleanSelect
-
-
-my_all = ('MobileField', 'LongitudeField', 'LatitudeField', 'SplitCharField', 'TimestampField', 'PairCharField')
-
-__all__ = tuple(
-    set(fields.__all__) | set(my_all)
-)
 
 
 class _Empty(object):
