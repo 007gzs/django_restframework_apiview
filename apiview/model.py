@@ -136,11 +136,11 @@ class BaseModel(models.Model, ModelFieldChangeMixin):
                 ret.add('=%s' % field.name)
         return ret
 
-    def __unicode__(self):
+    def __str__(self):
         return '%s%s(%d)' % (self.__class__.__name__, self._meta.verbose_name, self.pk)
 
-    def __str__(self):
-        return self.__unicode__()
+    def __unicode__(self):
+        return self.__str__()
 
     def save(self, force_insert=False, force_update=False, using=None,
              update_fields=None):

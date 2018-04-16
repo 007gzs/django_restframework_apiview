@@ -509,14 +509,6 @@ class ProxyModelAdmin(admin.ModelAdmin):
         '''
         return super(ProxyModelAdmin, self).has_add_permission(request)
 
-    # def get_readonly_fields(self, request, obj=None):
-    #     mask = get_mask(request, obj)
-    #     readonly_fields = None # get_cache(self.get_readonly_fields, mask)
-    #     if readonly_fields is None:
-    #         readonly_fields = list(super(ProxyModelAdmin, self).get_readonly_fields(request, obj))
-    #         # set_cache(self.get_readonly_fields, mask, readonly_fields)
-    #     return readonly_fields
-
     def get_form(self, request, obj=None, **kwargs):
         if 'fields' in kwargs:
             fields = kwargs.get('fields')
@@ -640,9 +632,18 @@ class ProxyModelAdmin(admin.ModelAdmin):
             return [(None, {'fields': fields})]
         return fieldsets
 
+    def get_super_readonly_fields(self, request, obj):
+        mask = get_mask(request, obj)
+        readonly_fields = get_cache(self.get_readonly_fields, mask)
+        if readonly_fields is None:
+            readonly_fields = list(super(ProxyModelAdmin, self).get_readonly_fields(request, obj))
+            set_cache(self.get_readonly_fields, mask, readonly_fields)
+        return readonly_fields
+
     def get_readonly_fields(self, request, obj=None, fields=None):
         if obj and self.has_edit_perm(request, obj):
-            readonly_fields = list(super(ProxyModelAdmin, self).get_readonly_fields(request, obj))
+
+            readonly_fields = self.get_super_readonly_fields(request, obj)
             readonly_fields_set = set(readonly_fields)
             for field in self.change_view_readonly_fields:
                 if field not in readonly_fields_set:
@@ -666,7 +667,7 @@ class ProxyModelAdmin(admin.ModelAdmin):
         elif not self.has_edit_perm(request, obj):
             return fields if fields is not None else self.get_list_display(request)
         else:
-            return list(super(ProxyModelAdmin, self).get_readonly_fields(request, obj))
+            return self.get_super_readonly_fields(request, obj)
 
     def get_list_display(self, request):
         '''
