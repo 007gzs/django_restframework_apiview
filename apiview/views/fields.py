@@ -24,7 +24,7 @@ from django.utils.translation import ugettext_lazy as _
 from django.utils.encoding import force_text
 from apiview import utility
 # to prevent Importation-Examination
-from django.forms.fields import *  # NOQA
+
 
 from apiview import validators
 from .widgets import BooleanInput, NullBooleanSelect
@@ -161,7 +161,7 @@ for _fieldclass_name in fields.__all__[1:]:
 
 # overwrite BooleanField and NullBooleanField to accept 0,1
 @wrap_field(methods=('to_python', ))
-class BooleanField(fields.BooleanField):
+class BooleanField(BooleanField):
     widget = BooleanInput
 
     default_error_messages = {
@@ -184,26 +184,26 @@ class BooleanField(fields.BooleanField):
             raise ValidationError(self.error_messages['invalid'], code='invalid')
 
 
-class NullBooleanField(fields.NullBooleanField):
+class NullBooleanField(NullBooleanField):
     widget = NullBooleanSelect
 
 
-class MobileField(fields.CharField):
+class MobileField(CharField):
     default_validators = [validators.mobile]
 
 
-class LongitudeField(fields.FloatField):
+class LongitudeField(FloatField):
     def __init__(self, max_value=180.0, min_value=-180.0, *args, **kwargs):
         super(LongitudeField, self).__init__(max_value, min_value, *args, **kwargs)
 
 
-class LatitudeField(fields.FloatField):
+class LatitudeField(FloatField):
     def __init__(self, max_value=90.0, min_value=-90.0, *args, **kwargs):
         super(LatitudeField, self).__init__(
             max_value, min_value, *args, **kwargs)
 
 
-class SplitCharField(fields.CharField):
+class SplitCharField(CharField):
     """Split string value with given sep or seps
     """
 
@@ -222,7 +222,7 @@ class SplitCharField(fields.CharField):
             return []
 
 
-class TimestampField(fields.IntegerField):
+class TimestampField(IntegerField):
     def to_python(self, value):
         v = super(TimestampField, self).to_python(value)
         if v is None:
@@ -230,7 +230,7 @@ class TimestampField(fields.IntegerField):
         return utility.timestamp2datetime(v)
 
 
-class PairCharField(fields.CharField):
+class PairCharField(CharField):
     """Split string value with given seps"""
     default_error_messages = {
         'invalid': _('Enter a valid value.'),
