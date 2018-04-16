@@ -549,17 +549,17 @@ class ProxyModelAdmin(admin.ModelAdmin):
                     if not relates:
                         continue
 
-                        # queryset = BCity.manage_city_queryset(request, field.queryset)
-                        # key = field.to_field_name or 'pk'
-                        # if len(relates) != queryset.filter(**{'%s__in' % key: relates}).count():
-                        #     to_exclude_fields.append(name)
-                        #     readonly_fields_set.add(name)
-                # elif isinstance(field, forms.ModelChoiceField):
-                #     queryset = BCity.manage_city_queryset(request, field.queryset)
-                #     key = field.to_field_name or 'pk'
-                #     if not queryset.filter(**{key: val}).exists():
-                #         to_exclude_fields.append(name)
-                #         readonly_fields_set.add(name)
+                        queryset = field.queryset
+                        key = field.to_field_name or 'pk'
+                        if len(relates) != queryset.filter(**{'%s__in' % key: relates}).count():
+                            to_exclude_fields.append(name)
+                            readonly_fields_set.add(name)
+                elif isinstance(field, forms.ModelChoiceField):
+                    queryset = field.queryset
+                    key = field.to_field_name or 'pk'
+                    if not queryset.filter(**{key: val}).exists():
+                        to_exclude_fields.append(name)
+                        readonly_fields_set.add(name)
                 elif isinstance(field, forms.ChoiceField):
                     if field.choices and val not in dict(field.choices):
                         to_exclude_fields.append(name)
