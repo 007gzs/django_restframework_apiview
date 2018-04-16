@@ -40,7 +40,7 @@ from import_export.admin import (
 )
 from import_export.resources import ModelDeclarativeMetaclass, ModelResource
 
-from apiview import mailtools, widgets
+from apiview import mailtools, widgets, cache
 
 FIX_COLUMN_VAR = 'fc'
 main.IGNORED_PARAMS += (FIX_COLUMN_VAR,)
@@ -183,7 +183,7 @@ def format_field(verbose, field, options=None, **kwargs):
     Example:
         class MyAdminClass(models.ModelAdmin):
             list_display = [format_field(
-                verbose=u'名字', field='username', options={
+                verbose='名字', field='username', options={
                     'style': 'color:red'
                 }), ...]
     '''
@@ -213,7 +213,7 @@ def collapse_fields(verbose, fields, options=None, **kwargs):
     Example:
         class MyAdminClass(models.ModelAdmin):
             list_display = [collapse_fields(
-                verbose=u'名字', fields=('username', 'name'), options={
+                verbose='名字', fields=('username', 'name'), options={
                     'username':{'style': 'color:red'}
                 }), ...]
     '''
@@ -313,7 +313,7 @@ class StrictModelFormSet(BaseModelFormSet):
                 queryset=self.queryset,
             )
             self.forms = new_formset.forms
-            raise ValidationError(u'页面数据已经更新，请修改后重新保存')
+            raise ValidationError('页面数据已经更新，请修改后重新保存')
 
 
 class StrictInlineFormSet(BaseInlineFormSet):
@@ -365,7 +365,7 @@ class StrictInlineFormSet(BaseInlineFormSet):
                 queryset=self.queryset,
             )
             self.forms = new_formset.forms
-            raise ValidationError(u'页面数据已经更新，请修改后重新保存')
+            raise ValidationError('页面数据已经更新，请修改后重新保存')
 
 
 class AdminImageWidget(AdminFileWidget):
@@ -634,18 +634,11 @@ class ProxyModelAdmin(admin.ModelAdmin):
             return [(None, {'fields': fields})]
         return fieldsets
 
-    def get_super_readonly_fields(self, request, obj):
-        mask = get_mask(request, obj)
-        readonly_fields = get_cache(self.get_readonly_fields, mask)
-        if readonly_fields is None:
-            readonly_fields = list(super(ProxyModelAdmin, self).get_readonly_fields(request, obj))
-            set_cache(self.get_readonly_fields, mask, readonly_fields)
-        return readonly_fields
 
     def get_readonly_fields(self, request, obj=None, fields=None):
         if obj and self.has_edit_perm(request, obj):
 
-            readonly_fields = self.get_super_readonly_fields(request, obj)
+            readonly_fields = list(super(ProxyModelAdmin, self).get_readonly_fields(request, obj))
             readonly_fields_set = set(readonly_fields)
             for field in self.change_view_readonly_fields:
                 if field not in readonly_fields_set:
@@ -669,7 +662,7 @@ class ProxyModelAdmin(admin.ModelAdmin):
         elif not self.has_edit_perm(request, obj):
             return fields if fields is not None else self.get_list_display(request)
         else:
-            return self.get_super_readonly_fields(request, obj)
+            return list(super(ProxyModelAdmin, self).get_readonly_fields(request, obj))
 
     def get_list_display(self, request):
         '''
@@ -773,7 +766,7 @@ class ProxyModelAdmin(admin.ModelAdmin):
         html_list.append('</select>')
         return ''.join(html_list)
 
-    get_all_relations.short_description = u'相关项'
+    get_all_relations.short_description = '相关项'
     get_all_relations.allow_tags = True
 
 
@@ -927,7 +920,7 @@ class ExportMixin(_ExportMixin):
     def export_action(self, request, *args, **kwargs):
         if request.method == "POST":
             if not request.user.email:
-                self.message_user(request, u'请设置您的邮箱, 以接收导出数据', messages.ERROR)
+                self.message_user(request, '请设置您的邮箱, 以接收导出数据', messages.ERROR)
             elif not request.POST['file_format']:
                 # prompt error
                 return _ExportMixin.export_action(self, request, *args, **kwargs)
@@ -959,13 +952,13 @@ class ExportMixin(_ExportMixin):
                 #     if config.SL_EXPORT_DATA_STRICT:
                 #         self.message_user(
                 #             request,
-                #             u'导出数据量超出限制(%s条)，请添加筛选条件后重试' % (
+                #             '导出数据量超出限制(%s条)，请添加筛选条件后重试' % (
                 #                 config.SL_EXPORT_DATA_NUM, ),
                 #             messages.ERROR)
                 #         return HttpResponseRedirect('../?' + request.META['QUERY_STRING'])
                 #     else:
                 #         self.message_user(
-                #             request, u'导出数据量过多，处理时间较长，请耐心等待邮件',
+                #             request, '导出数据量过多，处理时间较长，请耐心等待邮件',
                 #             messages.WARNING)
                 mail_export_data(filename, request.user.email, self.model,
                                  resource_class, formats[format_index], queryset)
@@ -974,7 +967,7 @@ class ExportMixin(_ExportMixin):
                 #     resource_class, formats[format_index], queryset)
 
                 self.message_user(
-                    request, u'数据将发送到您的公司邮箱, 请注意查收',
+                    request, '数据将发送到您的公司邮箱, 请注意查收',
                     messages.SUCCESS)
             return HttpResponseRedirect('../?' + request.META['QUERY_STRING'])
         return _ExportMixin.export_action(self, request, *args, **kwargs)
