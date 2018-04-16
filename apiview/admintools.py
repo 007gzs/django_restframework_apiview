@@ -511,6 +511,9 @@ class ProxyModelAdmin(admin.ModelAdmin):
         '''
         return super(ProxyModelAdmin, self).has_add_permission(request)
 
+    def get_user_queryset(self, queryset):
+        return queryset
+
     def get_form(self, request, obj=None, **kwargs):
         if 'fields' in kwargs:
             fields = kwargs.get('fields')
@@ -548,14 +551,13 @@ class ProxyModelAdmin(admin.ModelAdmin):
                     relates = list(val.all().values_list('pk', flat=True))
                     if not relates:
                         continue
-
-                        queryset = field.queryset
-                        key = field.to_field_name or 'pk'
-                        if len(relates) != queryset.filter(**{'%s__in' % key: relates}).count():
-                            to_exclude_fields.append(name)
-                            readonly_fields_set.add(name)
+                    queryset = self.get_user_queryset(field.queryset)
+                    key = field.to_field_name or 'pk'
+                    if len(relates) != queryset.filter(**{'%s__in' % key: relates}).count():
+                        to_exclude_fields.append(name)
+                        readonly_fields_set.add(name)
                 elif isinstance(field, forms.ModelChoiceField):
-                    queryset = field.queryset
+                    queryset = self.get_user_queryset(field.queryset)
                     key = field.to_field_name or 'pk'
                     if not queryset.filter(**{key: val}).exists():
                         to_exclude_fields.append(name)
@@ -633,7 +635,6 @@ class ProxyModelAdmin(admin.ModelAdmin):
             fields = [f for f in list_display if f in valid_f_names]
             return [(None, {'fields': fields})]
         return fieldsets
-
 
     def get_readonly_fields(self, request, obj=None, fields=None):
         if obj and self.has_edit_perm(request, obj):
