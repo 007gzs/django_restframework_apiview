@@ -30,6 +30,13 @@ from apiview import validators
 from .widgets import BooleanInput, NullBooleanSelect
 
 
+my_all = ('MobileField', 'LongitudeField', 'LatitudeField', 'SplitCharField', 'TimestampField', 'PairCharField')
+
+__all__ = tuple(
+    set(fields.__all__) + set(my_all)
+)
+
+
 class _Empty(object):
     def __nonzero__(self):
         return False
@@ -161,7 +168,7 @@ for _fieldclass_name in fields.__all__[1:]:
 
 # overwrite BooleanField and NullBooleanField to accept 0,1
 @wrap_field(methods=('to_python', ))
-class BooleanField(BooleanField):
+class BooleanField(BooleanField):  # NOQA
     widget = BooleanInput
 
     default_error_messages = {
@@ -184,26 +191,26 @@ class BooleanField(BooleanField):
             raise ValidationError(self.error_messages['invalid'], code='invalid')
 
 
-class NullBooleanField(NullBooleanField):
+class NullBooleanField(NullBooleanField):  # NOQA
     widget = NullBooleanSelect
 
 
-class MobileField(CharField):
+class MobileField(CharField):  # NOQA
     default_validators = [validators.mobile]
 
 
-class LongitudeField(FloatField):
+class LongitudeField(FloatField):  # NOQA
     def __init__(self, max_value=180.0, min_value=-180.0, *args, **kwargs):
         super(LongitudeField, self).__init__(max_value, min_value, *args, **kwargs)
 
 
-class LatitudeField(FloatField):
+class LatitudeField(FloatField):  # NOQA
     def __init__(self, max_value=90.0, min_value=-90.0, *args, **kwargs):
         super(LatitudeField, self).__init__(
             max_value, min_value, *args, **kwargs)
 
 
-class SplitCharField(CharField):
+class SplitCharField(CharField):  # NOQA
     """Split string value with given sep or seps
     """
 
@@ -222,7 +229,7 @@ class SplitCharField(CharField):
             return []
 
 
-class TimestampField(IntegerField):
+class TimestampField(IntegerField):  # NOQA
     def to_python(self, value):
         v = super(TimestampField, self).to_python(value)
         if v is None:
@@ -230,7 +237,7 @@ class TimestampField(IntegerField):
         return utility.timestamp2datetime(v)
 
 
-class PairCharField(CharField):
+class PairCharField(CharField):  # NOQA
     """Split string value with given seps"""
     default_error_messages = {
         'invalid': _('Enter a valid value.'),
