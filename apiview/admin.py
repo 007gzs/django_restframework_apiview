@@ -16,12 +16,12 @@ class BaseAdmin(admintools.ProxyModelAdmin):
 def site_register(model_or_iterable, admin_class=None, site=None, **options):
     if site is None:
         site = admin.site
+    if admin_class is None:
+        admin_class = BaseAdmin
     if not isinstance(model_or_iterable, (list, set, tuple)):
         model_or_iterable = [model_or_iterable]
     for m in model_or_iterable:
         if issubclass(m, model.BaseModel):
-            if admin_class is None:
-                admin_class = BaseAdmin
             m2m_fields = []
             search_fields = list(m.search_fields())
             generic_foreign_keys = []

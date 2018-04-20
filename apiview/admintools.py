@@ -393,7 +393,7 @@ class ProxyModelAdmin(admin.ModelAdmin):
 
     # Extend options to manage site
     # extend field exclude RelatedField and PrimaryKey fields into list_display
-    extend_normal_fields = False
+    extend_normal_fields = True
     exclude_list_display = []
     heads = []
     tails = []
