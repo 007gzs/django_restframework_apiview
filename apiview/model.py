@@ -136,6 +136,23 @@ class BaseModel(models.Model, ModelFieldChangeMixin):
                 ret.add('=%s' % field.name)
         return ret
 
+    @classmethod
+    def get_child_field(cls, attr):
+        field_names = attr.split('__')
+        head_model = cls
+        name = ''
+        field = None
+        for field_name in field_names:
+            if head_model is None:
+                raise RuntimeError('{} not found {}'.format(cls, attr))
+            field = head_model._meta.get_field(field_name)
+            head_model = field.remote_field.model if field.remote_field is not None else None
+            if name == '':
+                name = field.verbose_name
+            else:
+                name += ' ' + field.verbose_name
+        return isinstance(field, models.BooleanField), name
+
     def __str__(self):
         return '%s%s(%d)' % (self.__class__.__name__, self._meta.verbose_name, self.pk)
 

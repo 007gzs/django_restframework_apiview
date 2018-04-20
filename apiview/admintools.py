@@ -5,7 +5,7 @@ from __future__ import absolute_import, unicode_literals
 
 import copy
 import mimetypes
-from functools import wraps
+from functools import wraps, reduce
 
 
 from django import forms
@@ -417,6 +417,30 @@ class ProxyModelAdmin(admin.ModelAdmin):
 
     formset = StrictModelFormSet
 
+    def __getattr__(self, attr):
+        if ('__' in attr
+                and not attr.startswith('_')
+                and not attr.endswith('_boolean')
+                and not attr.endswith('_short_description')):
+
+            def dyn_lookup(instance):
+                # traverse all __ lookups
+                return reduce(lambda parent, child: getattr(parent, child),
+                              attr.split('__'),
+                              instance)
+
+            # get admin_order_field, boolean and short_description
+            dyn_lookup.admin_order_field = attr
+            dyn_lookup.boolean = getattr(self, '{}_boolean'.format(attr), False)
+            dyn_lookup.short_description = getattr(
+                self, '{}_short_description'.format(attr),
+                attr.replace('_', ' ').capitalize())
+
+            return dyn_lookup
+
+        # not dynamic lookup, default behaviour
+        return self.__getattribute__(attr)
+
     def _reset(self, request, querset):
         pass
 
@@ -430,6 +454,8 @@ class ProxyModelAdmin(admin.ModelAdmin):
         return super(ProxyModelAdmin, self).formfield_for_dbfield(db_field, **kwargs)
 
     def get_editable_fields(self, request, obj=None):
+        if not self.editable:
+            return ()
         if self.editable_fields == forms.ALL_FIELDS:
             return None
         elif self.editable_fields is None:
@@ -485,14 +511,14 @@ class ProxyModelAdmin(admin.ModelAdmin):
     def has_change_permission(self, request, obj=None):
         '''add inspection of changeable option
         '''
-
-        ret = False
-        if obj:
-            if self.editable:
-                ret = self.has_change_perm(request, obj)
-        else:
-            ret = self.has_change_perm(request, obj)
-        return ret
+        return self.has_change_perm(request, obj)
+        # ret = False
+        # if obj:
+        #     if self.editable:
+        #         ret = self.has_change_perm(request, obj)
+        # else:
+        #     ret = self.has_change_perm(request, obj)
+        # return ret
 
     def has_change_perm(self, request, obj=None):
         '''user permission checking inside the view logic
