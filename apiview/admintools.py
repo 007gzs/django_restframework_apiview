@@ -943,6 +943,10 @@ class HumanizedModelResource(BaseModelResource):
 
 
 class ExportMixin(_ExportMixin):
+
+    def async_export_data(self, func, *args, **kwargs):
+        func(*args, **kwargs)
+
     @check_perms('view')
     def export_action(self, request, *args, **kwargs):
         if request.method == "POST":
@@ -987,14 +991,16 @@ class ExportMixin(_ExportMixin):
                 #         self.message_user(
                 #             request, '导出数据量过多，处理时间较长，请耐心等待邮件',
                 #             messages.WARNING)
-                mail_export_data(filename, request.user.email, self.model,
-                                 resource_class, formats[format_index], queryset)
+                self.async_export_data(mail_export_data, filename, request.user.email, self.model,
+                                       resource_class, formats[format_index], queryset)
+                # mail_export_data(filename, request.user.email, self.model,
+                #                  resource_class, formats[format_index], queryset)
                 # async_call(
                 #     mail_export_data, filename, request.user.email, self.model,
                 #     resource_class, formats[format_index], queryset)
 
                 self.message_user(
-                    request, '数据将发送到您的公司邮箱, 请注意查收',
+                    request, '数据将发送到您的邮箱, 请注意查收',
                     messages.SUCCESS)
             return HttpResponseRedirect('../?' + request.META['QUERY_STRING'])
         return _ExportMixin.export_action(self, request, *args, **kwargs)
