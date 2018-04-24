@@ -38,6 +38,8 @@ def site_register(model_or_iterable, admin_class=None, site=None, **options):
                         m2m_fields.append(field.name)
                     elif field.many_to_one and hasattr(field.remote_field, 'model') and field.remote_field.model:
                         generic_foreign_keys.append(field.name)
+                    elif field.one_to_one and hasattr(field.remote_field, 'model') and field.remote_field.model:
+                        generic_foreign_keys.append(field.name)
 
             filter_horizontal = m2m_fields
             raw_id_fields = generic_foreign_keys
