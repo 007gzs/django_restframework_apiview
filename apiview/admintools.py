@@ -729,12 +729,12 @@ class ProxyModelAdmin(admin.ModelAdmin):
         tails = []
 
         def _get_field(field_name):
-            if not isinstance(field_name, six.string_types):
+            if not field_name or not isinstance(field_name, six.string_types):
                 return field_name
             try:
                 field = self.model._meta.get_field(field_name)
                 if field and isinstance(field, models.ImageField):
-                    format_field(field.verbose_name, field.name)
+                    return format_field(field.verbose_name, field.name)
                 else:
                     return field_name
             except FieldDoesNotExist as e:
