@@ -52,7 +52,7 @@ class TagWidget(forms.Widget):
 
     def _patch_inline_style(self, attrs):
         self.tag = attrs.pop('tag', None) or self.tag
-        css = attrs.pop('css', None)
+        css = attrs.pop('css', None) or self.css
         style = attrs.pop('style', None)
         style = style and styles2python(style)
         if style and css:

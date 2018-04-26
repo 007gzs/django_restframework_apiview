@@ -3,6 +3,7 @@
 
 from __future__ import absolute_import, unicode_literals
 
+import six
 import copy
 import mimetypes
 from functools import wraps, reduce
@@ -197,7 +198,7 @@ def format_field(verbose, field, options=None, **kwargs):
         if widgetclass is None:
             widgetclass = get_widget(field)
         widget = widgetclass(attrs)
-        return widget.render(label, value, None)
+        return widget.render(label, value, {})
 
     _format_field.short_description = verbose
     _format_field.allow_tags = True
@@ -374,7 +375,7 @@ class AdminImageWidget(AdminFileWidget):
         if value and getattr(value, "url", None):
             image_url = value.url
             file_name = str(value)
-            output.append(' <a href="%s" target="_blank"><img src="%s" alt="%s" /></a>' %
+            output.append(' <a href="%s" target="_blank"><img src="%s" alt="%s" style="max-width: 500px; max-height: 1000px" /></a>' %
                           (image_url, image_url, file_name))
         output.append(super(AdminFileWidget, self).render(name, value, attrs, renderer))
         return mark_safe(''.join(output))
@@ -726,14 +727,27 @@ class ProxyModelAdmin(admin.ModelAdmin):
         heads = []
         middles = []
         tails = []
+
+        def _get_field(filed_name):
+            if not isinstance(file_name, six.string_types):
+                return filed_name
+            try:
+                field = self.model._meta.get_field(field_name)
+                if field and isinstance(field, models.ImageField):
+                    ret.append(format_field(field.verbose_name, field.name))
+                else:
+                    return field_name
+            except FieldDoesNotExist as e:
+                return field_name
+
         while list_display:
             name = list_display.pop(0)
             if name in self.tails:
-                tails.append(name)
+                tails.append(_get_field(name))
             elif name in self.heads:
-                heads.append(name)
+                heads.append(_get_field(name))
             else:
-                middles.append(name)
+                middles.append(_get_field(name))
 
         for field in self.get_normal_fields():
             if field.name in heads or field.name in middles or field.name in tails:
@@ -741,11 +755,11 @@ class ProxyModelAdmin(admin.ModelAdmin):
             if field.name in self.exclude_list_display:
                 pass
             elif field.name in self.tails:
-                tails.append(field.name)
+                tails.append(_get_field(field.name))
             elif field.name in self.heads:
-                heads.append(field.name)
+                heads.append(_get_field(field.name))
             else:
-                middles.append(field.name)
+                middles.append(_get_field(field.name))
         field_names.extend(heads)
         field_names.extend(middles)
         field_names.extend(tails)
@@ -753,11 +767,11 @@ class ProxyModelAdmin(admin.ModelAdmin):
             field_names.append('get_all_relations')
         return field_names
 
-    def _get_image_field_render(self, field):
-        def image_tag(obj):
-            return mark_safe('<img src="%s" style="max-width: 500px; max-height:300px" />' % (getattr(obj, field.name)))
-        image_tag.short_description = field.verbose_name
-        return image_tag
+    # def _get_image_field_render(self, field):
+    #     def image_tag(obj):
+    #         return mark_safe('<img src="%s" style="max-width: 500px; max-height:300px" />' % (getattr(obj, field.name)))
+    #     image_tag.short_description = field.verbose_name
+    #     return image_tag
 
     def get_normal_fields(self):
         fields = []
@@ -767,11 +781,11 @@ class ProxyModelAdmin(admin.ModelAdmin):
                     or field.name.startswith('_')
                     or field.attname in exclude):
                 if isinstance(field, models.ImageField):
-                    field_name = '_apiview__%s__image_show' % field.name
-                    if not hasattr(self, field_name):
-                        setattr(self, field_name, self._get_image_field_render(field))
-                    field = field.clone()
-                    field.name = field_name
+                    # field_name = '_apiview__%s__image_show' % field.name
+                    # if not hasattr(self, field_name):
+                    #     setattr(self, field_name, self._get_image_field_render(field))
+                    # field = field.clone()
+                    # field.name = field_name
                     fields.append(field)
                 elif not isinstance(field, models.FileField):
                     fields.append(field)
