@@ -375,7 +375,8 @@ class AdminImageWidget(AdminFileWidget):
         if value and getattr(value, "url", None):
             image_url = value.url
             file_name = str(value)
-            output.append(' <a href="%s" target="_blank"><img src="%s" alt="%s" style="max-width: 500px; max-height: 1000px" /></a>' %
+            output.append(' <a href="%s" target="_blank">'
+                          '<img src="%s" alt="%s" style="max-width: 500px; max-height: 1000px" /></a>' %
                           (image_url, image_url, file_name))
         output.append(super(AdminFileWidget, self).render(name, value, attrs, renderer))
         return mark_safe(''.join(output))
@@ -769,7 +770,8 @@ class ProxyModelAdmin(admin.ModelAdmin):
 
     # def _get_image_field_render(self, field):
     #     def image_tag(obj):
-    #         return mark_safe('<img src="%s" style="max-width: 500px; max-height:300px" />' % (getattr(obj, field.name)))
+    #         return mark_safe('<img src="%s" style="max-width: 500px; max-height:300px" />'
+    #             % (getattr(obj, field.name)))
     #     image_tag.short_description = field.verbose_name
     #     return image_tag
 
