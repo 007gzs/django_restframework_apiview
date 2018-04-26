@@ -118,7 +118,7 @@ class BaseModel(models.Model, ModelFieldChangeMixin):
                 return "%s__search" % field_name[1:]
             else:
                 return "%s__icontains" % field_name
-        return [construct_search(str(search_field)) for search_field in cls.search_fields()]
+        return ['pk__iexact', ] + [construct_search(str(search_field)) for search_field in cls.search_fields()]
 
     @classmethod
     def search_fields(cls):
@@ -132,7 +132,7 @@ class BaseModel(models.Model, ModelFieldChangeMixin):
                 continue
             if isinstance(field, models.CharField):
                 ret.add('^%s' % field.name)
-            elif isinstance(field, models.IntegerField):
+            elif isinstance(field, models.IntegerField) and not field.choices:
                 ret.add('=%s' % field.name)
         return ret
 
