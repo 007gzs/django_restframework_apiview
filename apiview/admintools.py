@@ -17,7 +17,7 @@ from django.contrib.admin.views import main
 from django.contrib.admin.widgets import AdminFileWidget
 from django.contrib.auth import get_permission_codename
 from django.contrib.contenttypes.models import ContentType
-from django.core.exceptions import PermissionDenied, ValidationError
+from django.core.exceptions import PermissionDenied, ValidationError, FieldDoesNotExist
 from django.core.validators import EMPTY_VALUES
 from django.db import models, DEFAULT_DB_ALIAS, DJANGO_VERSION_PICKLE_KEY
 from django.db.models.constants import LOOKUP_SEP
@@ -728,13 +728,13 @@ class ProxyModelAdmin(admin.ModelAdmin):
         middles = []
         tails = []
 
-        def _get_field(filed_name):
-            if not isinstance(file_name, six.string_types):
-                return filed_name
+        def _get_field(field_name):
+            if not isinstance(field_name, six.string_types):
+                return field_name
             try:
                 field = self.model._meta.get_field(field_name)
                 if field and isinstance(field, models.ImageField):
-                    ret.append(format_field(field.verbose_name, field.name))
+                    format_field(field.verbose_name, field.name)
                 else:
                     return field_name
             except FieldDoesNotExist as e:
