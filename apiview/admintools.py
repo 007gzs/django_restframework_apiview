@@ -707,7 +707,7 @@ class ProxyModelAdmin(admin.ModelAdmin):
                 target_field, remote_field = get_related_model_fields(self.model, rel, is_foreign_key)
                 rel_opts = remote_field.model._meta
                 codename = get_permission_codename('change', rel_opts)
-                if request.user.has_perm('%s.%s' % (self.opts.app_label, codename)):
+                if request.user.has_perm('%s.%s' % (rel_opts.app_label, codename)):
                     try:
                         uri = reverse('admin:%s_%s_changelist' % (
                             rel_opts.app_label, rel_opts.model_name))
