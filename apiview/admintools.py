@@ -257,11 +257,11 @@ def limit_queryset(limits=None, base=QuerySet):
     return LimitQuerySet
 
 
-def get_related_model_fields(model, rel):
+def get_related_model_fields(model, rel, is_foreign_key):
     '''通过model下rel对象获取相关字段或关联属性'''
     # 多对多关联的REL对象本身不区分关系前后
     # 相关代理类做同样处理
-    if rel.field.model._meta.concrete_model == model._meta.concrete_model:
+    if is_foreign_key and rel.field.model._meta.concrete_model == model._meta.concrete_model:
         return rel.field, rel.get_related_field()
     return rel.get_related_field(), rel.field
 
@@ -701,18 +701,29 @@ class ProxyModelAdmin(admin.ModelAdmin):
         list_display = list(super(ProxyModelAdmin, self).get_list_display(request))
         if not hasattr(request, '_access_rels'):
             request._access_rels = []
-            for rel in self.opts.related_objects + tuple(r.rel for r in self.opts.many_to_many):
-                target_field, remote_field = get_related_model_fields(self.model, rel)
+
+            def _add_access_rels(rel, is_foreign_key):
+
+                target_field, remote_field = get_related_model_fields(self.model, rel, is_foreign_key)
                 rel_opts = remote_field.model._meta
                 codename = get_permission_codename('change', rel_opts)
                 if request.user.has_perm('%s.%s' % (self.opts.app_label, codename)):
                     try:
                         uri = reverse('admin:%s_%s_changelist' % (
-                            self.opts.app_label, rel_opts.model_name))
+                            rel_opts.app_label, rel_opts.model_name))
                     except NoReverseMatch:
                         pass
                     else:
-                        request._access_rels.append((uri, target_field, remote_field))
+                        request._access_rels.append((uri, target_field, remote_field, is_foreign_key))
+
+            for rel in self.opts.related_objects + tuple(r.remote_field for r in self.opts.many_to_many):
+                _add_access_rels(rel, False)
+            for key, field in self.opts._forward_fields_map.items():
+                if key != field.name:
+                    continue
+                if field.is_relation and (field.many_to_one or field.one_to_one) \
+                        and hasattr(field.remote_field, 'model') and field.remote_field.model:
+                    _add_access_rels(field.remote_field, True)
 
         if request._access_rels:
             self._access_rels = request._access_rels
@@ -798,14 +809,17 @@ class ProxyModelAdmin(admin.ModelAdmin):
             return ''
         html_list = ['<select onchange="window.open(this.value, \'_self\');">', ]
         html_list.append('<option value="" selected="selected">------</option>')
-        for uri, target_field, remote_field in self._access_rels:
+        for uri, target_field, remote_field, is_foreign_key in self._access_rels:
             rel_opts = remote_field.model._meta
             value = getattr(obj, target_field.attname)
             value = force_text(value)
             params = {remote_field.name: value}
             url = '%s?%s' % (uri, urlencode(params))
-            html_list.append('<option value="%s">%s-%s</option>' % (
-                url, rel_opts.verbose_name, remote_field.verbose_name))
+            if is_foreign_key:
+                html_list.append('<option value="%s">%s</option>' % (url, target_field.verbose_name))
+            else:
+                html_list.append('<option value="%s">%s-%s</option>' % (
+                    url, rel_opts.verbose_name, remote_field.verbose_name))
         html_list.append('</select>')
         return ''.join(html_list)
 
@@ -835,11 +849,11 @@ def check_perms(*perms):
 
 
 class ImportMixin(_ImportMixin):
-    @check_perms('add', 'change')
+    @check_perms('add', 'edit')
     def import_action(self, request, *args, **kwargs):
         return _ImportMixin.import_action(self, request, *args, **kwargs)
 
-    @check_perms('add', 'change')
+    @check_perms('add', 'edit')
     def process_import(self, request, *args, **kwargs):
         return _ImportMixin.process_import(self, request, *args, **kwargs)
 
@@ -963,7 +977,7 @@ class ExportMixin(_ExportMixin):
     def async_export_data(self, func, *args, **kwargs):
         func(*args, **kwargs)
 
-    @check_perms('view')
+    @check_perms('change')
     def export_action(self, request, *args, **kwargs):
         if request.method == "POST":
             if not request.user.email:

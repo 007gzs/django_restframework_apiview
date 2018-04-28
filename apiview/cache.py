@@ -2,6 +2,7 @@
 # encoding: utf-8
 from __future__ import absolute_import, unicode_literals
 
+from django.db import models
 from django.core.cache import cache
 from django.utils.encoding import force_text
 
@@ -71,3 +72,29 @@ class BaseCacheItem(object):
 class AdminFuncCache(BaseCacheItem):
     _prefix = None
     _expire_secs = 3600 * 24
+
+
+class ModelPkCacheItem(BaseCacheItem):
+    _prefix = 'apiview:model_cache'
+    _expire_secs = 600
+
+
+class ModelPkCache(object):
+
+    @classmethod
+    def _getkey(cls, modelcls, pk):
+        assert issubclass(modelcls, models.Model)
+        return "%s:%s" % (modelcls._meta.db_table, pk)
+
+    @classmethod
+    def get(cls, modelcls, pk):
+        ret = ModelPkCacheItem.get(cls._getkey(modelcls, pk))
+        if ret is None:
+            ret = modelcls.objects.filter(pk=pk).first()
+            if ret is not None:
+                ModelPkCacheItem.set(cls._getkey(modelcls, pk), ret)
+        return ret
+
+    @classmethod
+    def delete(cls, modelcls, pk):
+        return ModelPkCacheItem.delete(cls._getkey(modelcls, pk))

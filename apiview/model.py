@@ -10,6 +10,8 @@ from django.db.models.manager import EmptyManager
 from django.contrib.auth.models import Group, Permission
 from django.utils.functional import cached_property
 
+from . import cache
+
 
 class ModelChangeMixin(object):
     '''Monitor the changed attributes'''
@@ -93,6 +95,8 @@ class ModelFieldChangeMixin(ModelChangeMixin):
 
 class BaseModel(models.Model, ModelFieldChangeMixin):
 
+    with_cache = True
+
     class Meta:
         abstract = True
         ordering = ['-pk', ]
@@ -159,8 +163,28 @@ class BaseModel(models.Model, ModelFieldChangeMixin):
     def __unicode__(self):
         return self.__str__()
 
+    @classmethod
+    def get_obj_by_pk_from_cache(cls, pk):
+        if cls.with_cache:
+            return cache.ModelPkCache.get(cls, pk)
+        else:
+            return cls.objects.filter(pk=pk).first()
+
+    @classmethod
+    def flush_cache_by_pk(cls, pk):
+        if cls.with_cache and pk is not None:
+            cache.ModelPkCache.delete(cls, pk)
+
+    def flush_cache(self):
+        self.flush_cache_by_pk(self.pk)
+
+    def delete(self, using=None, keep_parents=False):
+        self.flush_cache()
+        return super(BaseModel, self).delete(using=using, keep_parents=keep_parents)
+
     def save(self, force_insert=False, force_update=False, using=None,
              update_fields=None):
+        self.flush_cache()
         if not (force_insert or force_update or update_fields):
             if self._meta.select_on_save:
                 pk_val = self._meta.model.objects.filter(pk=self.pk).values_list('pk', flat=True).first()
