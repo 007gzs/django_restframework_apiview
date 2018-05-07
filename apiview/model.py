@@ -58,7 +58,7 @@ class ModelFieldChangeMixin(ModelChangeMixin):
                         _attname_map[field.attname] = field
                         _name_map[field.name] = field
                         if isinstance(field, models.DateField) and field.auto_now:
-                            _auto_now_names.append(field.name)
+                            _auto_now_names.add(field.name)
 
                 self._meta._attname_map = _attname_map
                 self._meta._name_map = _name_map
