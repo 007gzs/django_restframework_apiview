@@ -10,8 +10,7 @@ from functools import wraps, reduce
 
 
 from django import forms
-from django.contrib import admin
-from django.contrib import messages
+from django.contrib import admin, messages
 from django.contrib.admin.utils import flatten_fieldsets, unquote
 from django.contrib.admin.views import main
 from django.contrib.admin.widgets import AdminFileWidget
@@ -821,7 +820,7 @@ class ProxyModelAdmin(admin.ModelAdmin):
                 html_list.append('<option value="%s">%s-%s</option>' % (
                     url, rel_opts.verbose_name, remote_field.verbose_name))
         html_list.append('</select>')
-        return ''.join(html_list)
+        return mark_safe(''.join(html_list))
 
     get_all_relations.short_description = '相关项'
     get_all_relations.allow_tags = True
