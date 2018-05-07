@@ -50,14 +50,19 @@ class ModelFieldChangeMixin(ModelChangeMixin):
             if not hasattr(self._meta, '_attname_map'):
                 _attname_map = {}
                 _name_map = {}
+                _auto_now_names = set()
                 cache = self._meta._get_fields(reverse=False, include_hidden=True)
                 for field in cache:
                     # model fields defined directly and not primary key
                     if isinstance(field, models.Field) and not field.primary_key:
                         _attname_map[field.attname] = field
                         _name_map[field.name] = field
+                        if isinstance(field, models.DateField) and field.auto_now:
+                            _auto_now_names.append(field.name)
+
                 self._meta._attname_map = _attname_map
                 self._meta._name_map = _name_map
+                self._meta._auto_now_names = _auto_now_names
             if name in self._meta._attname_map:
                 field = self._meta._attname_map.get(name)
                 self._to_change(name, value)
@@ -89,8 +94,10 @@ class ModelFieldChangeMixin(ModelChangeMixin):
     def save_changed(self, using=None):
         '''save the changed fields'''
         if self.changed_fields:
+            self.changed_fields.update(getattr(self._meta, '_auto_now_names', set()))
             self.save(force_update=True, update_fields=list(self.changed_fields), using=using)
             self.changed_fields.clear()
+            self.changed_map.clear()
 
 
 class BaseModel(models.Model, ModelFieldChangeMixin):
@@ -138,6 +145,7 @@ class BaseModel(models.Model, ModelFieldChangeMixin):
                 ret.add('^%s' % field.name)
             elif isinstance(field, models.IntegerField) and not field.choices:
                 ret.add('=%s' % field.name)
+        cls._search_fields = ret
         return ret
 
     @classmethod

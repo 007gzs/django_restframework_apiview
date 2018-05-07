@@ -11,6 +11,17 @@ class CodeData(object):
         self.message = message
         self.tag = tag
 
+    def __str__(self):
+        return str(self.code)
+
+    def __eq__(self, other):
+        if isinstance(other, CodeData):
+            return other.code == self.code
+        elif isinstance(other, type(self.code)):
+            return other == self.code
+        else:
+            return super(CodeData, self).__eq__(other)
+
     def get_res_dict(self, **kwargs):
         ret = dict(kwargs)
         ret['code'] = self.code
