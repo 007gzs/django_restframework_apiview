@@ -102,7 +102,8 @@ class ModelFieldChangeMixin(ModelChangeMixin):
 
 class BaseModel(models.Model, ModelFieldChangeMixin):
 
-    with_cache = True
+    _MODEL_WITH_CACHE = True
+    _MODEL_CACHE_TTL = 600
 
     class Meta:
         abstract = True
@@ -173,18 +174,37 @@ class BaseModel(models.Model, ModelFieldChangeMixin):
 
     @classmethod
     def get_obj_by_pk_from_cache(cls, pk):
-        if cls.with_cache:
+        if cls._MODEL_WITH_CACHE:
             return cache.ModelPkCache.get(cls, pk)
         else:
             return cls.objects.filter(pk=pk).first()
 
     @classmethod
     def flush_cache_by_pk(cls, pk):
-        if cls.with_cache and pk is not None:
+        if cls._MODEL_WITH_CACHE and pk is not None:
             cache.ModelPkCache.delete(cls, pk)
+
+    @classmethod
+    def get_obj_by_unique_key_from_cache(cls, **kwargs):
+        assert len(kwargs) == 1
+        key, value = list(kwargs.items())[0]
+        if cls._MODEL_WITH_CACHE:
+            return cache.ModelUniqueFieldCache.get(cls, key, value)
+        else:
+            return cls.objects.filter(**{key: value}).first()
+
+    @classmethod
+    def flush_cache_by_unique_key(cls, **kwargs):
+        assert len(kwargs) == 1
+        key, value = list(kwargs.items())[0]
+        if cls._MODEL_WITH_CACHE and value is not None:
+            cache.ModelUniqueFieldCache.delete(cls, key, value)
 
     def flush_cache(self):
         self.flush_cache_by_pk(self.pk)
+        for field in self._meta.fields:
+            if field.unique:
+                self.flush_cache_by_unique_key(**field.get_filter_kwargs_for_object(self))
 
     def delete(self, using=None, keep_parents=False):
         self.flush_cache()

@@ -74,9 +74,34 @@ class AdminFuncCache(BaseCacheItem):
     _expire_secs = 3600 * 24
 
 
-class ModelPkCacheItem(BaseCacheItem):
+class ModelCacheItem(BaseCacheItem):
     _prefix = 'apiview:model_cache'
     _expire_secs = 600
+
+
+class ModelUniqueFieldCache(object):
+
+    @classmethod
+    def _getkey(cls, modelcls, field_name, field_key):
+        assert field_key is not None
+        assert issubclass(modelcls, models.Model)
+        filed = modelcls._meta.get_field(field_name)
+        assert filed.unique
+        return "%s:%s:%s" % (modelcls._meta.db_table, filed.name, field_key)
+
+    @classmethod
+    def get(cls, modelcls, field_name, field_key):
+        ret = ModelCacheItem.get(cls._getkey(modelcls, field_name, field_key))
+        if ret is None:
+            ret = modelcls.objects.filter(**{field_name: field_key}).first()
+            if ret is not None:
+                ttl = getattr(modelcls, '_MODEL_CACHE_TTL', None)
+                ModelCacheItem.set(cls._getkey(modelcls, field_name, field_key), ret, ttl)
+        return ret
+
+    @classmethod
+    def delete(cls, modelcls, filed_name, filed_key):
+        return ModelCacheItem.delete(cls._getkey(modelcls, filed_name, filed_key))
 
 
 class ModelPkCache(object):
@@ -88,13 +113,14 @@ class ModelPkCache(object):
 
     @classmethod
     def get(cls, modelcls, pk):
-        ret = ModelPkCacheItem.get(cls._getkey(modelcls, pk))
+        ret = ModelCacheItem.get(cls._getkey(modelcls, pk))
         if ret is None:
             ret = modelcls.objects.filter(pk=pk).first()
             if ret is not None:
-                ModelPkCacheItem.set(cls._getkey(modelcls, pk), ret)
+                ttl = getattr(modelcls, '_MODEL_CACHE_TTL', None)
+                ModelCacheItem.set(cls._getkey(modelcls, pk), ret, ttl)
         return ret
 
     @classmethod
     def delete(cls, modelcls, pk):
-        return ModelPkCacheItem.delete(cls._getkey(modelcls, pk))
+        return ModelCacheItem.delete(cls._getkey(modelcls, pk))
