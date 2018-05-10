@@ -1,4 +1,3 @@
-#! /usr/bin/env python
 # encoding: utf-8
 """example URL Configuration
 
@@ -15,6 +14,8 @@ Including another URLconf
     1. Import the include() function: from django.conf.urls import url, include
     2. Add a URL to urlpatterns:  url(r'^blog/', include('blog.urls'))
 """
+from __future__ import absolute_import, unicode_literals
+
 from django.conf import settings
 from django.conf.urls import static
 from django.conf.urls import url, include

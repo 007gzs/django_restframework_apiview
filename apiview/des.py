@@ -1,4 +1,3 @@
-#! /usr/bin/env python
 # encoding: utf-8
 #############################################################################
 # Documentation                    #
@@ -85,6 +84,7 @@ Note: This code was not written for high-end systems needing a fast
       implementation, but rather a handy portable solution with small usage.
 
 """
+from __future__ import absolute_import, unicode_literals
 
 import sys
 

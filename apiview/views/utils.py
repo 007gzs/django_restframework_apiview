@@ -1,9 +1,7 @@
-#! /usr/bin/env python
 # encoding: utf-8
 """
 View utils package
 """
-
 from __future__ import unicode_literals, absolute_import
 
 

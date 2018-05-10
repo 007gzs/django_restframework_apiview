@@ -1,5 +1,4 @@
-Django==1.11.9
-channels==2.0.1
-django-restframework-apiview==1.2.1
-djangorestframework==3.7.7
-
+Django
+channels
+djangorestframework
+django-restframework-apiview

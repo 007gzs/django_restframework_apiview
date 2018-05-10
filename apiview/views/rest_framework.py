@@ -1,9 +1,7 @@
-#! /usr/bin/env python
 # encoding: utf-8
 """
 Definition of the rest framework compatible view class
 """
-
 from __future__ import absolute_import
 
 from django import forms

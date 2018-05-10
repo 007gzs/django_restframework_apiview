@@ -1,12 +1,8 @@
-#! usr/bin/env python
 # encoding: utf-8
-
 '''
 HTML Widget classes for display
 '''
-
-from __future__ import unicode_literals
-
+from __future__ import absolute_import, unicode_literals
 
 from django import forms
 from django.forms.utils import flatatt

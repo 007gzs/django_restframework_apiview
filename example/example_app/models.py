@@ -1,7 +1,5 @@
-#! /usr/bin/env python
 # encoding: utf-8
-
-from __future__ import unicode_literals
+from __future__ import absolute_import, unicode_literals
 
 from apiview.model import AbstractUserMixin, BaseModel
 from django.contrib.auth.base_user import AbstractBaseUser
