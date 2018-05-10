@@ -8,7 +8,8 @@ from apiview import model
 
 class ForwardManyToOneCacheDescriptor(ForwardManyToOneDescriptor):
     def get_cache_object(self, instance):
-        if not issubclass(self.field.model, model.BaseModel) or not self.field.model._MODEL_WITH_CACHE:
+        remote_model = self.field.remote_field.model
+        if not issubclass(remote_model, model.BaseModel) or not remote_model._MODEL_WITH_CACHE:
             return None
         if len(self.field.foreign_related_fields) != 1:
             return None
@@ -16,7 +17,7 @@ class ForwardManyToOneCacheDescriptor(ForwardManyToOneDescriptor):
         val = self.field.get_local_related_value(instance)
         if len(val) != 1:
             return None
-        return self.field.model.get_obj_by_unique_key_from_cache(**self.field.get_filter_kwargs_for_object(instance))
+        return remote_model.get_obj_by_unique_key_from_cache(**self.field.get_filter_kwargs_for_object(instance))
 
     def get_object(self, instance):
         try:
