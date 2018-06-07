@@ -61,9 +61,9 @@ class ApiViewConsumer(JsonWebsocketConsumer):
                                          getattr(self.message, "user", None), self.message.reply_channel)
             res['data'] = response.data
             res['status_code'] = response.status_code
-        except Resolver404 as e:
+        except Resolver404:
             res['status_code'] = 404
-        except Exception as e:
+        except Exception:
             res['status_code'] = 500
         res['reqid'] = reqid
         self.send(res)

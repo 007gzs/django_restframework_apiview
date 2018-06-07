@@ -118,7 +118,7 @@ def safe_loadjson(jstr):
     retobj = None
     try:
         retobj = json.loads(jstr)
-    except Exception as e:
+    except Exception:
         reportExceptionByMail("json load error")
 
     return retobj
@@ -441,7 +441,7 @@ def des_encode(inputdes, key):
         des_enc = des.des(key[:8], padmode=des.PAD_PKCS5)
         inputdes = force_bytes(inputdes)
         return base64.b64encode(des_enc.encrypt(inputdes))
-    except Exception as e:
+    except Exception:
         import inspect
         msg = "des_encode error"
         msg += ","
@@ -457,14 +457,14 @@ def des_decode(inputdes, key):
     debase64 = None
     try:
         debase64 = base64.b64decode(inputdes)
-    except Exception as e:
+    except Exception:
         reportExceptionByMail("'" + inputdes + "'")
         return None
 
     try:
         des_dec = des.des(key[:8], padmode=des.PAD_PKCS5)
         return des_dec.decrypt(debase64)
-    except Exception as e:
+    except Exception:
         import inspect
         msg = "des_decode error"
         msg += ","
@@ -510,7 +510,7 @@ def date_format(date_str):
     try:
         _date = datetime.datetime.strptime(date_str, '%Y-%m-%d').date()
         return _date
-    except Exception as e:
+    except Exception:
         return None
 
 
@@ -542,7 +542,7 @@ def fields_verify(model_admin, field_names, only_fields=False):
         try:
             if model._meta.get_field(field_name):
                 real_field_names.append(field_name)
-        except Exception as e:
+        except Exception:
             if not only_fields:
                 if hasattr(model_admin, field_name):
                     real_field_names.append(field_name)

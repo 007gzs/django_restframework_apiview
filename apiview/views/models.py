@@ -139,7 +139,7 @@ class TestCase(models.Model):
         query_string = request.META.get('QUERY_STRING', '')
         try:
             body = request.body
-        except Exception as e:
+        except Exception:
             body = request._body = request.read()
             request._stream = BytesIO(request._body)
 

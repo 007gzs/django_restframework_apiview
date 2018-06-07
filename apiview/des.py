@@ -437,7 +437,7 @@ class des(_baseDes):
             pos += 1
 
         if _pythonMajorVersion < 3:
-            return ''.join([chr(c) for c in result])
+            return ''.join(map(chr, result))
         else:
             return bytes(result)
 

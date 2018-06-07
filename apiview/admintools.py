@@ -746,7 +746,7 @@ class ProxyModelAdmin(admin.ModelAdmin):
                     return format_field(field.verbose_name, field.name)
                 else:
                     return field_name
-            except FieldDoesNotExist as e:
+            except FieldDoesNotExist:
                 return field_name
 
         while list_display:
