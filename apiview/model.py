@@ -3,6 +3,7 @@ from __future__ import absolute_import, unicode_literals
 
 from django.db import DatabaseError
 from django.db import models
+from django.db.models.base import ModelBase
 from django.db.models.manager import EmptyManager
 from django.contrib.auth.models import Group, Permission
 from django.utils.functional import cached_property
@@ -110,6 +111,7 @@ class BaseModel(models.Model, ModelFieldChangeMixin):
     def _prepare(cls):
         if 'edit' not in cls._meta.default_permissions:
             cls._meta.default_permissions += ('edit',)
+        ModelBase._prepare(cls)
 
     @classmethod
     def autocomplete_search_fields(cls):
