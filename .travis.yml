@@ -10,8 +10,8 @@ script:
   python setup.py install
 after_success:
   - |
-    if [[ "${TRAVIS_TAG:-}" != ""]]; then
-      python setup.py sdist bdist_wheel;
-      python -m pip install twine;
-      python -m twine upload --skip-existing dist/*;
+    if [[ "${TRAVIS_TAG:-}" != "" ]]; then
+      python3.6 setup.py sdist bdist_wheel;
+      python3.6 -m pip install twine;
+      python3.6 -m twine upload --skip-existing dist/*;
     fi
