@@ -384,8 +384,8 @@ class ProxyModelAdmin(admin.ModelAdmin):
     '''default Admin class used by proxy|real models
     '''
 
-    db_for_read = DEFAULT_DB_ALIAS
-    db_for_write = DEFAULT_DB_ALIAS
+    # db_for_read = DEFAULT_DB_ALIAS
+    # db_for_write = DEFAULT_DB_ALIAS
 
     # remove "__str__"
     list_display = []
@@ -472,9 +472,12 @@ class ProxyModelAdmin(admin.ModelAdmin):
             queryset = klass.from_queryset(queryset)
 
         if not self.has_delete_permission(request) and not self.has_edit_permission(request):
-            return queryset.using(self.db_for_read)
+            queryset._for_write = False
+            queryset._db = queryset.db
         else:
-            return queryset.using(self.db_for_write)
+            queryset._for_write = True
+            queryset._db = queryset.db
+        return queryset
 
     def get_model_perms(self, request):
 
@@ -995,7 +998,7 @@ class ExportMixin(_ExportMixin):
                 queryset = self.get_export_queryset(request)
                 queryset = DynQuerySet.from_queryset(queryset)
                 # queryset = queryset.using(BSlave.db_slave1)
-                queryset = queryset.using(DEFAULT_DB_ALIAS)
+                # queryset = queryset.using(DEFAULT_DB_ALIAS)
                 if self.resource_class is None:
                     if isinstance(self, ImportMixin):
                         resource_class = BaseModelResource
