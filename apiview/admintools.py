@@ -16,7 +16,7 @@ from django.contrib.auth import get_permission_codename
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import PermissionDenied, ValidationError, FieldDoesNotExist
 from django.core.validators import EMPTY_VALUES
-from django.db import models, DEFAULT_DB_ALIAS, DJANGO_VERSION_PICKLE_KEY
+from django.db import models, DJANGO_VERSION_PICKLE_KEY
 from django.db.models.constants import LOOKUP_SEP
 from django.db.models.fields.related import RelatedField
 from django.utils.safestring import mark_safe
