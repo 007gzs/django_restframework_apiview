@@ -716,7 +716,8 @@ class ProxyModelAdmin(admin.ModelAdmin):
                     else:
                         request._access_rels.append((uri, target_field, remote_field, is_foreign_key))
 
-            for rel in self.opts.related_objects + tuple(r.remote_field for r in self.opts.many_to_many):
+            for rel in self.opts.related_objects:
+                #  + tuple(r.remote_field for r in self.opts.many_to_many):
                 _add_access_rels(rel, False)
             for key, field in self.opts._forward_fields_map.items():
                 if key != field.name:
