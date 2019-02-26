@@ -87,7 +87,7 @@ class APIView(ViewBase):
             return self.format_res_data(exc.get_res_dict())
 
         if settings.DEBUG:
-            raise
+            raise exc
 
         utility.reportExceptionByMail("500")
         return self.format_res_data(ErrCode.ERR_SYS_ERROR.get_res_dict())

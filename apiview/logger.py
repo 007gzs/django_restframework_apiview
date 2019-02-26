@@ -11,7 +11,7 @@ class ManualCallerLogger(logging.Logger):
     """
     Allow to overwrite LogRecord object's attributes with extra
     """
-    def makeRecord(self, name, level, fn, lno, msg, args, exc_info, func=None, extra=None):
+    def makeRecord(self, name, level, fn, lno, msg, args, exc_info, func=None, extra=None, sinfo=None):
         if extra and CALLER_KEY in extra:
             caller = extra.get(CALLER_KEY)
             if isinstance(caller, types.FunctionType):
@@ -28,4 +28,4 @@ class ManualCallerLogger(logging.Logger):
                 else:
                     func = caller.im_class.__name__
 
-        return super(ManualCallerLogger, self).makeRecord(name, level, fn, lno, msg, args, exc_info, func, extra)
+        return super(ManualCallerLogger, self).makeRecord(name, level, fn, lno, msg, args, exc_info, func, extra, sinfo)
