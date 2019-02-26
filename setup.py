@@ -14,9 +14,9 @@ from setuptools import setup
 from codecs import open
 from os import path
 
+import ssl
 try:
-   import ssl
-   ssl._create_default_https_context = ssl._create_unverified_context
+    ssl._create_default_https_context = ssl._create_unverified_context
 except Exception:
     pass
 
