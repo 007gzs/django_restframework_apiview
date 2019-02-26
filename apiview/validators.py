@@ -111,19 +111,19 @@ auth_password = ComplexityValidator(min_length=8, max_length=1024, min_types=3)
 
 # 手机号
 mobile = RegexValidatorPlus(
-    re.compile('^1\d{10}$'),
+    re.compile(r'^1\d{10}$'),
     '手机号格式不正确')
 
 # 中文
 chinese = RegexValidatorPlus(
-    re.compile('^[\u4e00-\u9fa5]*$'),
+    re.compile(r'^[\u4e00-\u9fa5]*$'),
     '含有非中文字符')
 
 # 身份证号
 strict_id_card = RegexValidatorPlus(
-    re.compile('^(\d{16})|(\d{17}[\dxX])$'),
+    re.compile(r'^(\d{16})|(\d{17}[\dxX])$'),
     '身份证格式不正确')
 
 id_card = RegexValidatorPlus(
-    re.compile('^(\d{16})|(\d{17}[\da-zA-Z])$'),
+    re.compile(r'^(\d{16})|(\d{17}[\da-zA-Z])$'),
     '身份证格式不正确')
