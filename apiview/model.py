@@ -7,6 +7,7 @@ from django.db.models.base import ModelBase
 from django.db.models.manager import EmptyManager
 from django.contrib.auth.models import Group, Permission
 from django.utils.functional import cached_property
+from django.utils.encoding import force_str
 
 from . import cache
 
