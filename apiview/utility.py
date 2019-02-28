@@ -48,7 +48,7 @@ def unique_ids_generator(ids, size=6, amount=10, chars=CHARS):
     count = 0
     while count < amount:
         local_id = id_generator()
-        if local_id not in ids:
+        if local_id not in ids and local_id not in local_ids:
             local_ids.append(local_id)
             count += 1
     return local_ids
