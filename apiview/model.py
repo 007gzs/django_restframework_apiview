@@ -166,10 +166,10 @@ class BaseModel(models.Model, ModelFieldChangeMixin):
         return isinstance(field, models.BooleanField), name
 
     def __str__(self):
-        return '%s%s(%d)' % (self.__class__.__name__, self._meta.verbose_name, self.pk)
+        return force_str('%s%s(%d)' % (self.__class__.__name__, self._meta.verbose_name, self.pk))
 
     def __unicode__(self):
-        return self.__str__()
+        return '%s%s(%d)' % (self.__class__.__name__, self._meta.verbose_name, self.pk)
 
     @classmethod
     def get_obj_by_pk_from_cache(cls, pk):
