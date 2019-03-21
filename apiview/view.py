@@ -15,6 +15,7 @@ from .logger import CALLER_KEY
 
 
 class APIView(ViewBase):
+    ERROR_CODE_STATUS_CODE = 400
     logger = logging.getLogger('apiview')
 
     def get_view_name(self):
@@ -25,8 +26,11 @@ class APIView(ViewBase):
     def format_res_data(self, context):
         if not isinstance(context, dict) or 'code' not in context:
             context = self.get_default_context(data=context)
+        status_code = 200
+        if context['code'] != ErrCode.SUCCESS.code:
+            status_code = self.ERROR_CODE_STATUS_CODE
 
-        return Response(utility.format_res_data(context))
+        return Response(utility.format_res_data(context), status=status_code)
 
     def check_api_permissions(self, request, *args, **kwargs):
         pass
