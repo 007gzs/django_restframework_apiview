@@ -112,15 +112,15 @@ class BaseSerializer(serializers.ModelSerializer):
             context.update({"request": request})
 
         super(BaseSerializer, self).__init__(instance, data, **kwargs)
-        # self._context = context
-        # root = self.root
-        # if root is not None:
-        #     root._context = context
-        # fields = self._readable_fields
-        # for field in fields:
-        #     if isinstance(field, BaseSerializer):
-        #         if not hasattr(field, '_context'):
-        #             field._context = context
+        self._context = context
+        root = self.root
+        if root is not None:
+            root._context = context
+        fields = self._readable_fields
+        for field in fields:
+            if isinstance(field, BaseSerializer):
+                if not hasattr(field, '_context'):
+                    field._context = context
 
         # self.serializer_field_mapping[models.DateField] = DateFormatField
         # self.serializer_field_mapping[models.DateTimeField] = DateTimeFormatField
