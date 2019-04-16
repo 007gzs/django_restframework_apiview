@@ -17,7 +17,11 @@ class ForwardManyToOneCacheDescriptor(ForwardManyToOneDescriptor):
         val = self.field.get_local_related_value(instance)
         if len(val) != 1:
             return None
-        return remote_model.get_obj_by_unique_key_from_cache(**self.field.get_filter_kwargs_for_object(instance))
+        base_filter = {
+            rh_field.attname: getattr(instance, lh_field.attname)
+            for lh_field, rh_field in self.field.related_fields
+        }
+        return remote_model.get_obj_by_unique_key_from_cache(**base_filter)
 
     def get_object(self, instance):
         try:
