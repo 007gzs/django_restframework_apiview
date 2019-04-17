@@ -1,17 +1,8 @@
 # encoding: utf-8
 from __future__ import absolute_import, unicode_literals
 
-from django.db.models import FieldDoesNotExist
-try:
-    from django.db.models.related import RelatedObject
-except ImportError:
-    from django.db.models.fields.reverse_related import ForeignObjectRel as RelatedObject
-from django.forms import widgets
-from django.utils import six
 from django.contrib import admin
 from django.templatetags.static import static
-from django.db.models.constants import LOOKUP_SEP
-from django.db.models.sql.constants import QUERY_TERMS
 
 from apiview import admintools
 from apiview import model
