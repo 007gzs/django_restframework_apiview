@@ -3,6 +3,7 @@ from __future__ import absolute_import, unicode_literals
 
 import logging
 
+from django.http import HttpResponse
 from django.conf import settings
 from django.utils.encoding import force_text
 from rest_framework.response import Response
@@ -37,11 +38,11 @@ class APIView(ViewBase):
 
     def view(self, request, *args, **kwargs):
         self.logger.info("m=%s g=%s p=%s u=%s",
-                         request.META, request.query_params, request.data, request.user,
+                         request.META, request.query_params, getattr(request, 'body', None), request.user,
                          extra={CALLER_KEY: self.get_context})
         self.check_api_permissions(request, *args, **kwargs)
         context = self.get_context(request, *args, **kwargs)
-        if isinstance(context, Response):
+        if isinstance(context, HttpResponse):
             response = context
         else:
             response = self.format_res_data(context)
