@@ -4,6 +4,7 @@ from __future__ import absolute_import, unicode_literals
 from django import forms
 from django.forms.utils import ErrorDict
 from django.utils.encoding import force_text
+from rest_framework import exceptions
 
 
 class TextErrorDict(ErrorDict):
@@ -27,7 +28,12 @@ class Param(object):
         if is_ws:
             self._bounded_form = view.param_form(ws_data)
         else:
-            self._bounded_form = view.param_form(request.REQUEST, request.FILES)
+            args = [request.REQUEST, ]
+            try:
+                args.append(request.FILES)
+            except exceptions.UnsupportedMediaType:
+                pass
+            self._bounded_form = view.param_form(*args)
         self._dependency = self._opts.param_dependency
         if self._opts.param_managed:
             errors = self._bounded_form.errors
