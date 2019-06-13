@@ -79,7 +79,7 @@ class APIView(ViewBase):
                          extra={CALLER_KEY: self.get_context})
         context = self.get_default_context()
         self.set_code(context, ErrCode.ERR_COMMON_BAD_PARAM)
-        if settings.DEBUG:
+        if getattr(settings, 'APIVIEW_SHOWPARAM_INFO', settings.DEBUG):
             if hasattr(exc, 'error_dict_obj'):
                 context['errors'] = exc.error_dict_obj
                 context['desc'] = exc.error_dict_obj.as_text()
