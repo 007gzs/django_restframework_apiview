@@ -10,7 +10,7 @@ Screenshots
 .. image:: https://github.com/007gzs/django_restframework_apiview/raw/master/img/demo.jpg
 
 ****************
-User in your app
+Use in your app
 ****************
 Install using pip::
 
