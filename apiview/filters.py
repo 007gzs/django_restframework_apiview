@@ -69,7 +69,7 @@ class RelatedAutocompleteFilter(AbstractFieldListFilter):
         field_model = field.model or self.model
         if field_model:
             content_type = ContentType.objects.get_for_model(
-                getattr(field_model, field.name).field.remote_field.to, for_concrete_model=False
+                getattr(field_model, field.name).field.remote_field.model, for_concrete_model=False
             )
             self.grappelli_trick = u'/{app_label}/{model_name}/{to_field_var}={to_field}'.format(
                 to_field_var=TO_FIELD_VAR,
