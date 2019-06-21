@@ -83,7 +83,7 @@ class View(six.with_metaclass(ViewMetaclass, APIView)):
                 else:
                     handler = self.http_method_not_allowed
 
-                request.params = Param(self, request, self.is_ws, self.ws_data)
+                request.params = Param(self, request, kwargs, self.is_ws, self.ws_data)
                 request._request.params = request.params
                 response = handler(request, *args, **kwargs)
             else:

@@ -183,7 +183,7 @@ class View(six.with_metaclass(ViewMetaclass, DjangoView)):
                 else:
                     handler = self.http_method_not_allowed
 
-                request.params = Param(self, request)
+                request.params = Param(self, request, kwargs)
                 response = handler(request, *args, **kwargs)
             else:
                 handler = self.http_method_not_allowed

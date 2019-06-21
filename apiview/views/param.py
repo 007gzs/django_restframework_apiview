@@ -19,7 +19,7 @@ class Param(object):
     """
     Wrap django-form to access parameters more conveniently
     """
-    def __init__(self, view, request, is_ws, ws_data):
+    def __init__(self, view, request, kwargs=None, is_ws=False, ws_data=None):
         """
         May raise ValidationError when checking is False when accessing parameters
         """
@@ -28,7 +28,10 @@ class Param(object):
         if is_ws:
             self._bounded_form = view.param_form(ws_data)
         else:
-            args = [request.REQUEST, ]
+            data = dict(request.REQUEST)
+            if kwargs:
+                data.update(kwargs)
+            args = [data, ]
             try:
                 args.append(request.FILES)
             except exceptions.UnsupportedMediaType:
