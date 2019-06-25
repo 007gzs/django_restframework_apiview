@@ -193,13 +193,16 @@ class MobileField(CharField):  # NOQA
 
 class LongitudeField(FloatField):  # NOQA
     def __init__(self, max_value=180.0, min_value=-180.0, *args, **kwargs):
-        super(LongitudeField, self).__init__(max_value, min_value, *args, **kwargs)
+        super(LongitudeField, self).__init__(
+            max_value=max_value, min_value=min_value, *args, **kwargs
+        )
 
 
 class LatitudeField(FloatField):  # NOQA
     def __init__(self, max_value=90.0, min_value=-90.0, *args, **kwargs):
         super(LatitudeField, self).__init__(
-            max_value, min_value, *args, **kwargs)
+            max_value=max_value, min_value=min_value, *args, **kwargs
+        )
 
 
 class SplitCharField(CharField):  # NOQA

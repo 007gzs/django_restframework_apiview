@@ -1,4 +1,4 @@
 Django
-channels
+channels<2
 djangorestframework
 django-restframework-apiview

@@ -4,8 +4,11 @@ from __future__ import absolute_import, unicode_literals
 from channels.generic.websockets import JsonWebsocketConsumer
 from channels.handler import AsgiRequest
 from django.conf import settings
-from django.core import urlresolvers
 from django.urls import Resolver404
+try:
+    from django.urls import RegexURLResolver as URLResolver
+except ImportError:
+    from django.urls import URLResolver
 
 
 class ApiViewConsumer(JsonWebsocketConsumer):
@@ -34,7 +37,7 @@ class ApiViewConsumer(JsonWebsocketConsumer):
     @staticmethod
     def get_response(request, path, data, user, reply_channel):
         from .view import APIView
-        resolver = urlresolvers.RegexURLResolver(r'^/', settings.ROOT_URLCONF)
+        resolver = URLResolver(r'^/', settings.ROOT_URLCONF)
         resolver_match = resolver.resolve(path)
         callback, callback_args, callback_kwargs = resolver_match
         if not hasattr(callback, 'view_class') or not issubclass(callback.view_class, APIView):

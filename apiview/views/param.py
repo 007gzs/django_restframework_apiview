@@ -28,7 +28,7 @@ class Param(object):
         if is_ws:
             self._bounded_form = view.param_form(ws_data)
         else:
-            data = dict(request.REQUEST)
+            data = request.REQUEST.copy()
             if kwargs:
                 data.update(kwargs)
             args = [data, ]

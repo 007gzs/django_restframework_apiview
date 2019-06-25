@@ -1,3 +1,3 @@
 recursive-include apiview/templates *.html
-recursive-include apiview/static/apiview/js/ *
-recursive-include apiview/static/apiview/css/ *
+recursive-include apiview/static/apiview/js *
+recursive-include apiview/static/apiview/css *

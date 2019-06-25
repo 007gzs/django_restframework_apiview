@@ -15,4 +15,4 @@ class UserSerializer(BaseSerializer):
 
     class Meta:
         model = User
-        fields = ('id', 'username', 'nickname', 'modified')
+        fields = ('id', 'username', 'nickname')

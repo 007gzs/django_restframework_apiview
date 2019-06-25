@@ -30,7 +30,7 @@ class UserAPIBase(APIBase):
 
     def check_user_permission(self, request):
         user = request.user
-        if not user.is_authenticated() or not isinstance(user, User):
+        if not isinstance(user, User):
             raise CustomError(ErrCode.ERR_AUTH_NOLOGIN)
 
     def view(self, request, *args, **kwargs):
@@ -84,7 +84,7 @@ class UserRegister(APIBase):
 
     class Meta:
         param_fields = (
-            ('username', fields.RegexField(help_text='用户名', regex=r'^[a-zA-Z0-9_]{3,10}$')),
+            ('username', fields.RegexField(help_text='用户名', regex=r'^[a-zA-Z0-9_]{3,30}$')),
             ('password', fields.CharField(help_text='密码')),
             ('nickname', fields.CharField(help_text='昵称')),
         )

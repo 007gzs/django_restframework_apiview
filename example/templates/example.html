@@ -51,7 +51,7 @@
         conn_ws:function(url, data, listener){
             this.apiview.conn(url, data, listener);
         },
-        server:'http://127.0.0.1:8000', //服务地址
+        server:'/', //服务地址
         SUCCESS:0, //返回成功
         ERR_UNKOWN:-1, //未知错误
         ERR_SYS_ERROR:-2, //服务异常
@@ -98,7 +98,7 @@
                 }
             },
             error:function(xhr, type){
-                example_log("example_user_register error:" + xhr +"," + type);
+                example_log("example_user_register error:" + JSON.stringify(xhr) +"," + type);
             }
         }, username, password, nickname)
     }
@@ -111,7 +111,7 @@
                 }
             },
             error:function(xhr, type){
-                example_log("example_user_login error:" + xhr +"," + type);
+                example_log("example_user_login error:" + JSON.stringify(xhr) +"," + type);
             }
         }, username, password)
     }
@@ -119,20 +119,25 @@
         example.example_user_info({
             success:function(data){
                 example_log("example_user_info success:" + JSON.stringify(data));
-                if(data.code == example.ERR_AUTH_NOLOGIN){
-                    var rand = parseInt(Math.random() * 10000);
-                    var username = "username_" + rand; 
-                    var password = "password_" + rand;
-                    var nickname = "nickname_" + rand;
-                    reg(username, password, nickname, function(){
-                        login(username, password, callback);
-                    });
-                }else if(data.code == example.SUCCESS){
+                if(data.code == example.SUCCESS){
                     callback()
                 }
             },
             error:function(xhr, type){
-                example_log("example_user_info error:" + xhr + "," + type);
+                if(xhr.responseJSON){
+                    var data = xhr.responseJSON;
+                    if(data.code == example.ERR_AUTH_NOLOGIN){
+                        var rand = parseInt(Math.random() * 10000);
+                        var username = "username_" + rand; 
+                        var password = "password_" + rand;
+                        var nickname = "nickname_" + rand;
+                        reg(username, password, nickname, function(){
+                            login(username, password, callback);
+                        });
+                    }
+                }else{
+                    example_log("example_user_info error:" + JSON.stringify(xhr) + "," + type);    
+                }
             }
         })
     }
@@ -144,7 +149,7 @@
                         example_log("example_user_info_ws success:" + JSON.stringify(data));
                     },
                     error:function(xhr, type){
-                        example_log("example_user_info_ws error:" + xhr +"," + type);
+                        example_log("example_user_info_ws error:" + JSON.stringify(xhr) +"," + type);
                     }
                 });
             });
