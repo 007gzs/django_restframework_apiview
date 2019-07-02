@@ -219,7 +219,7 @@ class SplitCharField(CharField):  # NOQA
     def clean(self, value):
         value = super(SplitCharField, self).clean(value)
         if value:
-            return map(self.field.clean, value.split(self.sep))
+            return list(map(self.field.clean, value.split(self.sep)))
         else:
             return []
 

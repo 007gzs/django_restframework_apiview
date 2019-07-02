@@ -111,7 +111,7 @@ class ParamFieldInfo(APIBase):
         return self.get_default_context(params=map(lambda x: {x:getattr(request.params, x)}, request.params._bounded_form.cleaned_data.keys()))
 
     class Meta:
-        path = 'param_file_info'
+        path = 'param_filed_info'
         param_fields = (
             ('boolean_field', fields.BooleanField(help_text='help_text for this Boolean Field', required=True)),
             ('nullboolean_field', fields.NullBooleanField(help_text='help_text for this NullBoolean Field', default=None, required=False)),

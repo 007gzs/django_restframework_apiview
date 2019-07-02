@@ -47,7 +47,7 @@ def generate_api_js(request):
 
 
 def get_url(head, urlpattern):
-    url = urlpattern.regex.pattern
+    url = getattr(urlpattern, 'pattern', urlpattern).regex.pattern
     ret = head + url.rstrip("$?").lstrip('^')
     return ret.replace('//', '/')
 
