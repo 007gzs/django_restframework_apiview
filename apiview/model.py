@@ -268,3 +268,6 @@ class AbstractUserMixin(object):
 
     def has_module_perms(self, module):
         return False
+
+    def get_username():
+        return ''
