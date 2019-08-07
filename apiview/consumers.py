@@ -7,8 +7,6 @@ import datetime
 
 from channels.generic.websockets import JsonWebsocketConsumer
 from channels.handler import AsgiRequest
-from django.conf import settings
-from django.utils.encoding import force_text
 from django.urls import Resolver404, get_resolver
 
 
