@@ -1,7 +1,7 @@
 # encoding: utf-8
 from __future__ import absolute_import, unicode_literals
 
-__version__ = '1.3.14'
+__version__ = '1.3.15'
 __author__ = '007gzs'
 
 default_app_config = 'apiview.apps.ApiViewConfig'
