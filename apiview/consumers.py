@@ -18,6 +18,7 @@ class ApiViewConsumer(JsonWebsocketConsumer):
 
     def __init__(self, message, **kwargs):
         super(ApiViewConsumer, self).__init__(message, **kwargs)
+        self.message.reply_channel.send({"accept": True})
 
     @property
     def request(self):
