@@ -343,11 +343,11 @@ class StrictInlineFormSet(BaseInlineFormSet):
     def validate_queryset(self):
         pk = self.model._meta.pk
         to_python = pk.to_python
-        rel = pk.rel
+        rel = pk.remote_field
         while rel:
             related_field = rel.get_related_field()
             to_python = related_field.to_python
-            rel = related_field.rel
+            rel = related_field.remote_field
 
         updated = False
         for form in self.forms:

@@ -1,14 +1,15 @@
 # encoding: utf-8
 from __future__ import absolute_import, unicode_literals
 
+import pickle
+import base64
+import datetime
+
 from channels.generic.websockets import JsonWebsocketConsumer
 from channels.handler import AsgiRequest
 from django.conf import settings
-from django.urls import Resolver404
-try:
-    from django.urls import RegexURLResolver as URLResolver
-except ImportError:
-    from django.urls import URLResolver
+from django.utils.encoding import force_text
+from django.urls import Resolver404, get_resolver
 
 
 class ApiViewConsumer(JsonWebsocketConsumer):
@@ -26,6 +27,7 @@ class ApiViewConsumer(JsonWebsocketConsumer):
             msg = self.message
             connect_content = msg.channel_session.get(self.CONNECT_CONTENT_KEY, None)
             if connect_content is not None:
+                connect_content = pickle.loads(base64.b64decode(connect_content.encode()))
                 msg = msg.copy()
                 for k in connect_content.keys():
                     if k not in msg:
@@ -37,7 +39,7 @@ class ApiViewConsumer(JsonWebsocketConsumer):
     @staticmethod
     def get_response(request, path, data, user, reply_channel):
         from .view import APIView
-        resolver = URLResolver(r'^/', settings.ROOT_URLCONF)
+        resolver = get_resolver()
         resolver_match = resolver.resolve(path)
         callback, callback_args, callback_kwargs = resolver_match
         if not hasattr(callback, 'view_class') or not issubclass(callback.view_class, APIView):
@@ -52,7 +54,8 @@ class ApiViewConsumer(JsonWebsocketConsumer):
 
     def connect(self, message, **kwargs):
         super(ApiViewConsumer, self).connect(message, **kwargs)
-        message.channel_session[self.CONNECT_CONTENT_KEY] = message.content
+        content = base64.b64encode(pickle.dumps(message.content)).decode()
+        message.channel_session[self.CONNECT_CONTENT_KEY] = content
 
     def receive(self, content, **kwargs):
         path = content.get("path", None)
@@ -68,6 +71,7 @@ class ApiViewConsumer(JsonWebsocketConsumer):
             res['status_code'] = 404
         except Exception:
             res['status_code'] = 500
+        res['server_time'] = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         res['reqid'] = reqid
         self.send(res)
 
