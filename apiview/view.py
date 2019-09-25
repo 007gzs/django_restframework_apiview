@@ -17,6 +17,8 @@ from .logger import CALLER_KEY
 
 class APIView(ViewBase):
     ERROR_CODE_STATUS_CODE = 400
+    PARAM_ERRORS_STATUS_CODE = 400
+    SUCCESS_WITH_CODE = True
     logger = logging.getLogger('apiview')
 
     def get_view_name(self):
@@ -24,12 +26,19 @@ class APIView(ViewBase):
             return self.name
         return super(APIView, self).get_view_name()
 
-    def format_res_data(self, context):
-        if not isinstance(context, dict) or 'code' not in context:
-            context = self.get_default_context(data=context)
-        status_code = 200
-        if context['code'] != ErrCode.SUCCESS.code:
-            status_code = self.ERROR_CODE_STATUS_CODE
+    def format_res_data(self, context, status_code=None):
+        code = None
+        if self.SUCCESS_WITH_CODE:
+            if not isinstance(context, dict) or 'code' not in context:
+                context = self.get_default_context(data=context)
+
+        if status_code is None:
+            if isinstance(context, dict):
+                code = context.get('code', ErrCode.SUCCESS.code)
+            if code != ErrCode.SUCCESS.code:
+                status_code = self.ERROR_CODE_STATUS_CODE
+        if status_code is None:
+            status_code = 200
 
         return Response(utility.format_res_data(context), status=status_code)
 
@@ -57,18 +66,6 @@ class APIView(ViewBase):
     def get_default_context(**kwargs):
         return ErrCode.SUCCESS.get_res_dict(**kwargs)
 
-    @staticmethod
-    def set_code(context, code, message=None):
-        context['code'] = code.code
-        if message is None:
-            context['message'] = code.message
-        else:
-            context['message'] = message
-
-    @staticmethod
-    def set_message(context, message):
-        context['message'] = message
-
     def get_context(self, request, *args, **kwargs):
         raise NotImplementedError
 
@@ -85,7 +82,7 @@ class APIView(ViewBase):
                 context['desc'] = exc.error_dict_obj.as_text()
             else:
                 context['desc'] = force_text(exc)
-        return self.format_res_data(context)
+        return self.format_res_data(context, status_code=self.PARAM_ERRORS_STATUS_CODE)
 
     def handle_exception(self, exc):
         if isinstance(exc, CustomError):

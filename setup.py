@@ -97,7 +97,8 @@ setup(
     # https://packaging.python.org/en/latest/requirements.html
     install_requires=["django<2; python_version < '3'",
                       "django<3; python_version >= '3'",
-                      "djangorestframework",
+                      "djangorestframework<3.10; python_version < '3'",
+                      "djangorestframework; python_version >= '3'",
                       "django-import-export"],
 
     # List additional groups of dependencies here (e.g. development
