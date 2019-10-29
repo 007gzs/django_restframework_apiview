@@ -99,6 +99,7 @@ setup(
                       "django<3; python_version >= '3'",
                       "djangorestframework<3.10; python_version < '3'",
                       "djangorestframework; python_version >= '3'",
+                      "openpyxl<3; python_version < '3'",
                       "django-import-export"],
 
     # List additional groups of dependencies here (e.g. development
