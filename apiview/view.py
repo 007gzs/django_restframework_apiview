@@ -46,9 +46,15 @@ class APIView(ViewBase):
         pass
 
     def view(self, request, *args, **kwargs):
-        self.logger.info("m=%s g=%s p=%s u=%s",
-                         request.META, request.query_params, getattr(request, 'body', None), request.user,
-                         extra={CALLER_KEY: self.get_context})
+        self.logger.info(
+            "m=%s g=%s p=%s w=%s u=%s",
+            request.META,
+            request.query_params,
+            getattr(request, 'body', None),
+            getattr(self, 'ws_data', None),
+            request.user,
+            extra={CALLER_KEY: self.get_context}
+        )
         self.check_api_permissions(request, *args, **kwargs)
         context = self.get_context(request, *args, **kwargs)
         if isinstance(context, HttpResponse):
@@ -71,11 +77,16 @@ class APIView(ViewBase):
 
     def handle_param_errors(self, exc):
         request = self.request
-        self.logger.info("m=%s g=%s p=%s u=%s",
-                         request.META, request.query_params, request.data, request.user,
-                         extra={CALLER_KEY: self.get_context})
-        context = self.get_default_context()
-        self.set_code(context, ErrCode.ERR_COMMON_BAD_PARAM)
+        self.logger.info(
+            "param_errors m=%s g=%s p=%s w=%s u=%s",
+            request.META,
+            request.query_params,
+            getattr(request, 'body', None),
+            getattr(self, 'ws_data', None),
+            request.user,
+            extra={CALLER_KEY: self.get_context}
+        )
+        context = ErrCode.ERR_COMMON_BAD_PARAM.get_res_dict()
         if getattr(settings, 'APIVIEW_SHOWPARAM_INFO', settings.DEBUG):
             if hasattr(exc, 'error_dict_obj'):
                 context['errors'] = exc.error_dict_obj
