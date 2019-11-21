@@ -197,8 +197,7 @@ def sendEmail(subject, add_to, html_content):
         addr1 = add_to
         add_to = list()
         add_to.append(addr1)
-    if isinstance(subject, str):
-        subject = subject.decode('utf8')
+    subject = force_text(subject)
     if subject.find(settings.EMAIL_SUBJECT_PREFIX) < 0:
         subject = settings.EMAIL_SUBJECT_PREFIX + subject
 
