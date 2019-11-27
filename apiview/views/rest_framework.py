@@ -63,10 +63,10 @@ class View(six.with_metaclass(ViewMetaclass, APIView)):
         self.ws_data = kwargs.get("ws_data", {})
         self.ws_reply_channel = kwargs.get("ws_reply_channel", None)
         ws_user = kwargs.get("ws_user", None)
+        if ws_user is not None:
+            request.user = ws_user
         try:
             self.initial(request, *args, **kwargs)
-            if ws_user is not None:
-                request.user = ws_user
             handler_name = request.method.lower()
             if self.is_ws:
                 handler_name = "ws"

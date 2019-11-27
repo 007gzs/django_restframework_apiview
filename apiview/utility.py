@@ -558,9 +558,8 @@ def get_qrimgurl_by_content(request, content, **kwargs):
     path, name = os.path.split(file)
     if not os.path.exists(path):
         os.makedirs(path)
-    fp = open(file, 'wb')
-    qrcode.make(content, **kwargs).save(fp)
-    fp.close()
+    with open(file, 'wb') as fp:
+        qrcode.make(content, **kwargs).save(fp)
     qrurl = request.build_absolute_uri('/')[:-1] + settings.MEDIA_URL + filename
     return qrurl
 

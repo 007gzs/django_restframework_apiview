@@ -26,26 +26,7 @@ class APIView(ViewBase):
             return self.name
         return super(APIView, self).get_view_name()
 
-    def format_res_data(self, context, status_code=None):
-        code = None
-        if self.SUCCESS_WITH_CODE:
-            if not isinstance(context, dict) or 'code' not in context:
-                context = self.get_default_context(data=context)
-
-        if status_code is None:
-            if isinstance(context, dict):
-                code = context.get('code', ErrCode.SUCCESS.code)
-            if code != ErrCode.SUCCESS.code:
-                status_code = self.ERROR_CODE_STATUS_CODE
-        if status_code is None:
-            status_code = 200
-
-        return Response(utility.format_res_data(context), status=status_code)
-
-    def check_api_permissions(self, request, *args, **kwargs):
-        pass
-
-    def view(self, request, *args, **kwargs):
+    def initial(self, request, *args, **kwargs):
         self.logger.info(
             "m=%s g=%s p=%s w=%s u=%s",
             request.META,
@@ -55,6 +36,19 @@ class APIView(ViewBase):
             request.user,
             extra={CALLER_KEY: self.get_context}
         )
+        super(APIView, self).initial(request, *args, **kwargs)
+
+    def format_res_data(self, context, status_code=200):
+        if self.SUCCESS_WITH_CODE:
+            if not isinstance(context, dict) or 'code' not in context:
+                context = self.get_default_context(data=context)
+
+        return Response(utility.format_res_data(context), status=status_code)
+
+    def check_api_permissions(self, request, *args, **kwargs):
+        pass
+
+    def view(self, request, *args, **kwargs):
         self.check_api_permissions(request, *args, **kwargs)
         context = self.get_context(request, *args, **kwargs)
         if isinstance(context, HttpResponse):
@@ -97,10 +91,10 @@ class APIView(ViewBase):
 
     def handle_exception(self, exc):
         if isinstance(exc, CustomError):
-            return self.format_res_data(exc.get_res_dict())
+            return self.format_res_data(exc.get_res_dict(), status_code=self.ERROR_CODE_STATUS_CODE)
 
         if settings.DEBUG:
             raise exc
 
         utility.reportExceptionByMail("500")
-        return self.format_res_data(ErrCode.ERR_SYS_ERROR.get_res_dict())
+        return self.format_res_data(ErrCode.ERR_SYS_ERROR.get_res_dict(), status_code=self.ERROR_CODE_STATUS_CODE)
