@@ -22,6 +22,14 @@ def _camel2path(name):
     return '/'.join(split_camel_name(name)).lower() + '/'
 
 
+def _size_len(text):
+    return (len(text) + len(text.encode('utf8'))) // 2
+
+
+def _format(text, size):
+    return text + (" " * (size - _size_len(text)))
+
+
 class ViewOptions(object):
     """View options class
 
@@ -101,9 +109,9 @@ class ViewOptions(object):
         if fields:
             f_attrs = fields
         else:
-            f_attrs = ['type_name', 'omit', 'default', 'help_text', 'field_info']
+            f_attrs = ['type_name', 'required', 'omit', 'default', 'help_text', 'field_info']
         fields = ['name'] + f_attrs
-        f_lens = [len(field) for field in fields]
+        f_lens = [_size_len(field) for field in fields]
         rows = []
         if with_header:
             rows.append(fields)
@@ -113,13 +121,13 @@ class ViewOptions(object):
             else:
                 field_name = '[%s]' % name
             row = [field_name]
-            if f_lens[0] < len(field_name):
-                f_lens[0] = len(field_name)
+            if f_lens[0] < _size_len(field_name):
+                f_lens[0] = _size_len(field_name)
             idx = 1
             for att in f_attrs:
                 f_val = force_text(getattr(field, att))
-                if f_lens[idx] < len(f_val):
-                    f_lens[idx] = len(f_val)
+                if f_lens[idx] < _size_len(f_val):
+                    f_lens[idx] = _size_len(f_val)
                 row.append(f_val)
                 idx += 1
             rows.append(row)
@@ -132,7 +140,7 @@ class ViewOptions(object):
                 if idx == final_idx:
                     row_doc.append(val)
                 else:
-                    row_doc.append(format(val, '<%ds' % f_lens[idx]))
+                    row_doc.append(_format(val, f_lens[idx]))
             doc_list.append(' | '.join(row_doc))
 
         return '\n'.join(doc_list)

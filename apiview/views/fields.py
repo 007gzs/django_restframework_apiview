@@ -97,6 +97,8 @@ def _wrap_field(fieldclass, methods=()):
     @wraps(init_method)
     def __init__(self, *args, **kwargs):
         self.type_name = kwargs.pop('type_name', type(self).__name__)
+        if self.type_name.endswith("Field"):
+            self.type_name = self.type_name[:-5]
         self.omit = kwargs.pop('omit', empty)
         self.default = kwargs.pop('default', empty)
         if self.omit is not empty:
