@@ -3,6 +3,7 @@ from __future__ import absolute_import, unicode_literals
 
 import six
 import base64
+import decimal
 import datetime
 from functools import partial
 import hashlib
@@ -393,6 +394,8 @@ def format_res_data(data):
         for item in data:
             tmp.append(format_res_data(item))
         return tmp
+    elif isinstance(data, decimal.Decimal):
+        return six.text_type(data)
     else:
         timeformat = None
         canstamp = False
