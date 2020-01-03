@@ -7,7 +7,7 @@ import datetime
 
 try:
     from channels.generic.websocket import JsonWebsocketConsumer
-except:
+except Exception:
     from channels.generic.websockets import JsonWebsocketConsumer
 
 from channels.handler import AsgiRequest
