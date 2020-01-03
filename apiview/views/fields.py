@@ -13,12 +13,13 @@ Wrap django form fields to use `omit`, `default` instead of `required`
 
 from __future__ import unicode_literals, absolute_import
 
+import six
+
 from functools import wraps, partial
 from django.db import models
 from django.forms import fields
 from django.forms.models import fields_for_model
 from django.core.exceptions import ValidationError
-from django.utils import six
 from django.utils.translation import ugettext_lazy as _
 from django.utils.encoding import force_text
 from apiview import utility

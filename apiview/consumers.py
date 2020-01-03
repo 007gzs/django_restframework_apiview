@@ -5,7 +5,11 @@ import pickle
 import base64
 import datetime
 
-from channels.generic.websockets import JsonWebsocketConsumer
+try:
+    from channels.generic.websocket import JsonWebsocketConsumer
+except:
+    from channels.generic.websockets import JsonWebsocketConsumer
+
 from channels.handler import AsgiRequest
 from django.urls import Resolver404, get_resolver
 

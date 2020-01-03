@@ -4,8 +4,9 @@ Definition of the rest framework compatible view class
 """
 from __future__ import absolute_import
 
+import six
+
 from django import forms
-from django.utils import six
 from rest_framework.views import APIView
 from rest_framework.response import Response
 

@@ -97,7 +97,7 @@ setup(
     # https://packaging.python.org/en/latest/requirements.html
     install_requires=[
         "django<2; python_version < '3'",
-        "django<3; python_version >= '3'",
+        "django; python_version >= '3'",
         "djangorestframework<3.10; python_version < '3'",
         "djangorestframework; python_version >= '3'",
         "openpyxl<3; python_version < '3'",

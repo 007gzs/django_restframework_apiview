@@ -4,11 +4,11 @@ HTML Widget classes for display
 '''
 from __future__ import absolute_import, unicode_literals
 
+import six
 from django import forms
 from django.forms.utils import flatatt
 
 from django.utils.html import format_html
-from django.utils import six
 
 
 def styles2python(str_style):

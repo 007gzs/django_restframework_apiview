@@ -4,12 +4,13 @@ Declare the metaclass of the views to manage view generation
 """
 from __future__ import absolute_import, unicode_literals
 
+import six
+
 from collections import OrderedDict
 from six.moves.urllib.parse import urljoin
 from django import http
 from django import forms
 from django.views.generic import View as DjangoView
-from django.utils import six
 from django.utils.functional import cached_property
 from django.utils.encoding import force_text, force_str
 
