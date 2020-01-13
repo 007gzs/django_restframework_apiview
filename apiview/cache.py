@@ -60,12 +60,17 @@ class BaseCacheItem(object):
         return cache.get_or_set(cls._getkey(key), func, timeout)
 
     @classmethod
+    def expire(cls, key, timeout):
+        return cache.expire(cls._getkey(key), timeout)
+
+    @classmethod
     def persist(cls, key):
         return cache.persist(cls._getkey(key))
 
     @classmethod
-    def expire(cls, key, timeout):
-        return cache.expire(cls._getkey(key), timeout)
+    def clear(cls):
+        """只支持redis_cache"""
+        return cache.delete_pattern(cls._getkey('*'))
 
 
 class AdminFuncCache(BaseCacheItem):
