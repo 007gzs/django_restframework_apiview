@@ -91,7 +91,10 @@ class APIView(ViewBase):
 
     def handle_exception(self, exc):
         if isinstance(exc, CustomError):
-            return self.format_res_data(exc.get_res_dict(), status_code=self.ERROR_CODE_STATUS_CODE)
+            return self.format_res_data(
+                exc.get_res_dict(),
+                status_code=exc.kwargs.get('status_code', self.ERROR_CODE_STATUS_CODE)
+            )
 
         if settings.DEBUG:
             raise exc

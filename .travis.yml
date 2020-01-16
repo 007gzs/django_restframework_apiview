@@ -4,10 +4,8 @@ python:
   - "3.6"
 install:
   - pip install flake8
-before_script:
-  - python setup.py flake8
 script:
-  python setup.py install
+  - python setup.py flake8
 after_success:
   - |
     if [[ "${TRAVIS_TAG:-}" != "" ]]; then

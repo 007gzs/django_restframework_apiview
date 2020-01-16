@@ -41,14 +41,14 @@ def id_generator(size=6, chars=CHARS):
 
 
 def ids_generator(size=6, amount=10, chars=CHARS):
-    return [id_generator() for _ in range(amount)]
+    return [id_generator(size, chars) for _ in range(amount)]
 
 
 def unique_ids_generator(ids, size=6, amount=10, chars=CHARS):
     local_ids = []
     count = 0
     while count < amount:
-        local_id = id_generator()
+        local_id = id_generator(size, chars)
         if local_id not in ids and local_id not in local_ids:
             local_ids.append(local_id)
             count += 1
