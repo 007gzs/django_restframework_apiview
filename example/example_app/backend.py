@@ -7,7 +7,7 @@ from example_app.models import User
 
 class UserBackend(object):
 
-    def authenticate(self, example_username=None, example_password=None, **kwargs):
+    def authenticate(self, request, example_username=None, example_password=None, **kwargs):
         if example_username is None or example_password is None:
             return None
         user = User.objects.filter(username=example_username).first()
