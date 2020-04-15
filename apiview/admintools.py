@@ -570,7 +570,10 @@ class ProxyModelAdmin(admin.ModelAdmin):
                 field = form.base_fields.get(name, None)
                 if field is None:
                     continue
-                val = field.prepare_value(getattr(obj, name, None))
+                try:
+                    val = field.prepare_value(getattr(obj, name, None))
+                except Exception:
+                    val = None
                 if val is None:
                     continue
                 elif name in readonly_fields_set:
