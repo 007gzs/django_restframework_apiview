@@ -530,7 +530,7 @@ class ProxyModelAdmin(admin.ModelAdmin):
     def has_add_permission(self, request):
         '''add inspection of addable and editable option
         '''
-        if self.addable and self.editable:
+        if self.addable:
             return super(ProxyModelAdmin, self).has_add_permission(request)
         return False
 

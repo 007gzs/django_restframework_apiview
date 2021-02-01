@@ -31,7 +31,7 @@ class APIView(ViewBase):
             "m=%s g=%s p=%s w=%s u=%s",
             request.META,
             request.query_params,
-            getattr(request, 'body', None),
+            request.POST,
             getattr(self, 'ws_data', None),
             request.user,
             extra={CALLER_KEY: self.get_context}
@@ -75,7 +75,7 @@ class APIView(ViewBase):
             "param_errors m=%s g=%s p=%s w=%s u=%s",
             request.META,
             request.query_params,
-            getattr(request, 'body', None),
+            request.POST,
             getattr(self, 'ws_data', None),
             request.user,
             extra={CALLER_KEY: self.get_context}
